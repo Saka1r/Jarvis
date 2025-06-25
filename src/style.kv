@@ -1,0 +1,75 @@
+<Custom_button>:
+    background_color: rgba(0, 38, 161)
+    font_name: "source/Textur.ttf"
+    font_size: 18
+
+<Custom_textinput>:
+    background_color: rgba(0, 8, 131)
+    font_name: "source/Textur.ttf"
+    font_size: 18
+    foreground_color: 1,1,1,1
+
+ScreenManager:
+    id: screen_manager
+    Screen:
+        id: main
+        name: "main"
+        Image:
+            id: jarvis_heart
+            source: 'source/Jarvis.png'
+            size_hint:(None, None)
+            size: (500, 500)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.55}
+        Custom_button:
+            size_hint: 1, 0.25
+            text: "J.A.R.V.I.S"
+            on_release:
+                app.jarvis_start()
+
+        Custom_button:
+            text: "Лист команд"
+            size_hint: 0.4, 0.15
+            pos_hint: {"top": 1}
+            on_release:
+                app.screen("home_menu")
+    Screen:
+        id: home
+        name: "home_menu"
+        BoxLayout:
+            orientation: "vertical"
+
+            ScrollView:
+                GridLayout:
+                    id: list_button
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 20
+                    padding: 20
+    Screen:
+        id: config
+        name: "config"
+        Custom_button:
+            text: "Обратно"
+            size_hint: 0.4, 0.15
+            pos_hint: {"top": 1}
+            on_release:
+                app.screen("home_menu")
+        BoxLayout:
+            orientation: "vertical"
+            pos_hint: {"top": 0.8}
+            ScrollView:
+                GridLayout:
+                    id: list_config
+                    cols: 1
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 20
+                    padding: 20
+                    Custom_button:
+                        size_hint_y: None
+                        height: 100
+                        text: "Установить модуль"
+                        pos_hint: {"top": 0.8, "center_x": 0.5}
+                        on_release:
+                            app.module_install()
