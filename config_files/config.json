@@ -1,0 +1,16 @@
+{
+    "OS": "nt",
+    "Path": "D:\\Prog\\J.A.R.V.I.S\\0.1 gui",
+    "Commands": {
+        "я вернулся": "HelloSir",
+        "увеличить звук": "SoundUp",
+        "уменьшить звук": "SoundDown",
+        "выключить звук": "SoundOff",
+        "открой ютуб": "OpenYoutube",
+        "открой телегу": "OpenTelegram",
+        "открой прокси": "OpenYulta"
+    },
+    "NonVoiceCommands": [
+        "None"
+    ]
+}
