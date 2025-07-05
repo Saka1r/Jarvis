@@ -1,0 +1,15 @@
+{
+    "OS": "nt",
+    "Path": "You Path",
+    "Commands": {
+        "я вернулся": "HelloSir",
+        "увеличить звук": "SoundUp",
+        "уменьшить звук": "SoundDown",
+        "выключить звук": "SoundOff",
+        "открой ютуб": "OpenYoutube",
+        "открой телегу": "OpenTelegram"
+    },
+    "NonVoiceCommands": [
+        "None"
+    ]
+}
