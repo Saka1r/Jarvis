@@ -25,6 +25,7 @@ from custom_widget import Error_win
 import speech
 import threading
 import module
+import config
 
 Window.size = (1080/3, 1920/3)
 
@@ -39,15 +40,30 @@ class Jarvis(App):
         self.title = "J.A.R.V.I.S"
         Window.clearcolor = get_color_from_hex('#04060f')
         return Builder.load_file('style.kv')
-
-    def on_start(self):
-        self.create_to_list("Обратно", self.screen, "main")
-        self.create_to_list("Модули", self.screen, "config")
-
+    
     def screen(self, screen_name):
+        
         """Function of moving between a screens"""
         self.root.current = screen_name
         print(screen_name)
+    
+    def input_user(self):
+        result = config.check_files()       
+        if result == False:
+            self.screen("input")
+        else:
+            self.screen("main")
+    
+    def save_config(self):
+        key = self.root.ids.key_textinput.text
+        config.create_config(key)
+        self.screen("main")
+
+    def on_start(self):
+        self.input_user()       
+        self.create_to_list("Обратно", self.screen, "main")
+        self.create_to_list("Модули", self.screen, "config")
+         
     def run_speech(self):
 
         speech.stop_stream()

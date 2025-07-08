@@ -4,7 +4,6 @@ from termcolor import colored
 
 CONFIG_NAME = "config.json"
 
-JSON_STANDART = {"OS": os.name, "Path": os.getcwd(), "Commands": ["HelloSir"], "NonVoiceCommands": ["simple_write"]}
 flag_dir = False
 
 def check_files():
@@ -18,11 +17,24 @@ def check_files():
         else:
             print(colored("config_files exist but config.json not found", "red"))
             flag_dir = False
+            return flag_dir
     else:
         flag_dir = False
         return flag_dir
 
-def create_config():
+def create_config(key_pico):
+
+    standart_modules = {
+        "я вернулся": "HelloSir",
+        "увеличить звук": "SoundUp",
+        "уменьшить звук": "SoundDown",
+        "выключить звук": "SoundOff",
+        "открой ютуб": "OpenYoutube",
+        "открой телегу": "OpenTelegram"
+    }
+
+    JSON_STANDART = {"OS": os.name, "Path": os.getcwd(), "Key_Picovoice": key_pico, "Commands": standart_modules, "NonVoiceCommands": [None]}
+    
     out = check_files()
     if out:
         return
@@ -33,10 +45,14 @@ def create_config():
         else:
             print(colored("config_files directory already created.", "green"))
         with open(os.path.join("config_files", CONFIG_NAME), "w") as f:
-            json.dump(JSON_STANDART, f, indent=4)
+            json.dump(JSON_STANDART, f, indent=4, ensure_ascii=False)
         print(colored("Config file created", "yellow"))
 
 def parser_json():
-    with open("config_files/config.json", "r") as f:
+    with open("config_files/config.json", "r", encoding='utf-8') as f:
         list = json.load(f)
         print(list)
+    return list
+if __name__ == '__main__':
+    create_config("21376156das")
+    parser_json()

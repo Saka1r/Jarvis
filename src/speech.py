@@ -11,6 +11,7 @@ import random
 import time
 import threading
 import importlib
+import config
 from module import read_module
 
 stream = None
@@ -98,14 +99,20 @@ def wake_word_callback():
 def inference_callback(inference):
     pass
 
+def input_key():
+    json_conf = config.parser_json()
+    key_pico = json_conf["Key_Picovoice"]
+    return key_pico
+
 def start():
     global stream, p
+    key_pico = input_key()
     try:
         picovoice = Picovoice(
-            access_key="YOUR_KEY",
-            keyword_path="config_files/jarvis_w.ppn",
+            access_key=key_pico,
+            keyword_path="config_files/Jarvis_en_linux.ppn",
             wake_word_callback=wake_word_callback,
-            context_path="config_files/cont.rhn",
+            context_path="config_files/Jarvis_en_linux.rhn",
             inference_callback=inference_callback,
         )
         p = pyaudio.PyAudio()

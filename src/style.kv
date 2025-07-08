@@ -11,6 +11,7 @@
 
 ScreenManager:
     id: screen_manager
+    
     Screen:
         id: main
         name: "main"
@@ -32,6 +33,24 @@ ScreenManager:
             pos_hint: {"top": 1}
             on_release:
                 app.screen("home_menu")
+
+    Screen:
+        id: input
+        name: "input"
+        Custom_textinput:
+            id: key_textinput
+            name: "key_textinput"
+            hint_text: "Ваш picovoice ключь"
+            multiline: False
+            size_hint: 0.8, 0.1     
+            pos_hint: {'center_x': 0.5, 'center_y': 0.8} 
+        
+        Custom_button:
+            text: "Сохранить и продолжить"
+            size_hint: 0.8, 0.2     
+            pos_hint: {'center_x': 0.5, 'center_y': 0.2}
+            on_release:
+                app.save_config()
     Screen:
         id: home
         name: "home_menu"

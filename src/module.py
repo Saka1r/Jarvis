@@ -8,7 +8,6 @@ def check_dir_modules():
     list_dir = os.listdir()
     print(list_dir)
     if not os.path.exists("modules"):
-        # Создаем папку
         os.makedirs("modules")
         print("directory created")
     else:
