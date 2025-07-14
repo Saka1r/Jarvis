@@ -1,5 +1,5 @@
 import json
-import os
+import os 
 from termcolor import colored
 
 CONFIG_NAME = "config.json"
