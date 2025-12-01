@@ -167,7 +167,7 @@ def start():
     global stream, p
     try:
         picovoice = Picovoice(
-            access_key="ATr7lbre4SNVeh8fBJYTfHhEJLZx+BbUtDgkuEmrob3UWJPpmRvi4Q==",
+            access_key="You Key",
             keyword_path="config_files/jarvis_w.ppn",
             wake_word_callback=wake_word_callback,
             context_path="config_files/cont.rhn",
