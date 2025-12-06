@@ -140,6 +140,7 @@ def wake_word_vosk():
                     kill_stream()
                     start()
         else:
+            playsound("config_files/jarvis_speech/what.wav")
             stream.stop_stream()
             start()
 
@@ -165,9 +166,13 @@ def inference_callback(inference):
 
 def start():
     global stream, p
+
+    with open("key.txt", "r") as f:
+        key = f.read()
+
     try:
         picovoice = Picovoice(
-            access_key="You Key",
+            access_key=key,
             keyword_path="config_files/jarvis_w.ppn",
             wake_word_callback=wake_word_callback,
             context_path="config_files/cont.rhn",
