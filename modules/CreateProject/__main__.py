@@ -1,9 +1,22 @@
+def create_project(name):
+    import os
+    try:
+        os.mkdir(f"D:/Prog/Jarvis_project/{name}")
+        from playsound import playsound
+        playsound("config_files/jarvis_speech/eat.wav")
+        import speech
+        speech.start()
+    except:
+        from playsound import playsound
+        playsound("config_files/jarvis_speech/what.wav")
+        import speech
+        speech.start()
+
 def run():
     from vosk import Model, KaldiRecognizer
     from playsound import playsound
     import json 
     import pyaudio
-
 
     playsound("config_files/jarvis_speech/project.wav")
 
@@ -34,5 +47,8 @@ def run():
                     yield result_json["text"]
 
     for text in listen():
-        print(text)
+        create_project(text)
+        
+        stream.stop_stream()
+        stream.close()
         
