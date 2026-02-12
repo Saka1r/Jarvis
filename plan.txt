@@ -1,0 +1,45 @@
+jarvis/
+	- init.py
+	- main.py Запускает Jarvis
+	- config.py конфигурация. Настройка (пути, порты, токены и т.д). Сборка всего необходимого для проекта с data и т.д.
+	
+	config/
+		
+		- system.json -> настройки системы
+
+	core/
+		- init.py
+		- jarvis.py ядро проекта
+		- registry.py загружает плагины 
+		- context.py хранение состояния/сессий 
+
+	subsystems/
+		- init.py
+		- audio_in.py (микрофон/входные данные)
+		- audio_out.py (TTS, воспроизведение)
+		- stt.py (STT адаптеры)
+			+ vosk_stt.py
+		- tts.py (TTS)
+
+	plugins/
+		...  плагины
+
+	storage/
+		- init.py
+		- file_storage.py (json)
+		# не точно
+	data/
+
+		- settings.json
+		- plugins.json
+
+		... -> файлы необходимые для Джарвиса по типу референсы голоса, модели и т.д
+
+		recordings/
+			... -> временные записи
+
+	utils/
+		- init.py
+		- log.py
+	
+	tests/
