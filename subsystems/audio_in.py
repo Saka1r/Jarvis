@@ -6,7 +6,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AudioOpen():
-
     def __init__(self, rate=16000, channels=1, frames_per_buffer=8000, format=pyaudio.paInt16):
        
         self.rate = rate
@@ -24,11 +23,13 @@ class AudioOpen():
         with self._lock:
             if self.is_streaming:
                 return True
+
             try:
                 self._pyaudio = pyaudio.PyAudio()
                 self.stream = self._pyaudio.open(format=self.format, channels=self.channels, rate=self.rate, input=True, frames_per_buffer=self.frames_per_buffer)
                 self.is_streaming = True
                 return True
+
             except Exception:
                 logger.exception("Failed to open audio stream")
                 self.close()
@@ -49,8 +50,10 @@ class AudioOpen():
                 try:
                     self.stream.stop_stream()
                     self.stream.close()
+
                 except Exception:
                     logger.exception("Failed to close audio stream")
+
                 finally:
                     self.stream = None
 
