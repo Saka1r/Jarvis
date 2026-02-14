@@ -2,6 +2,7 @@ from subsystems import audio_in
 from subsystems import audio_out
 from subsystems.audio_in import AudioOpen
 from subsystems.vosk_stt import Vosk_STT
+from core.registry import Registry
 
 class Jarvis():
     def __init__(self):
@@ -10,6 +11,8 @@ class Jarvis():
     def start(cls):
         vosk = Vosk_STT()
         audio = AudioOpen()
+        reg = Registry()
+        reg.plug_start()
         audio_o = audio_out.AudioOut()
         vosk.open()
         audio.open()
@@ -22,5 +25,5 @@ class Jarvis():
                 answer = vosk.get_result()
                 if answer:
                     print(answer)
-                    audio_o.play(answer) 
+                    reg.voice_plug_start(answer)
         listen()

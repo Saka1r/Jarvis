@@ -9,7 +9,6 @@ class Config():
         "voice": [
             {
                 "name": "jarvis",
-                "enabled": True,
                 "version": "1.0",
                 "description": "Voice assistant plugin",
                 "author": "Sakair"

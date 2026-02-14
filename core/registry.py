@@ -2,6 +2,15 @@
 
 import json
 import os
+import sys
+import importlib
+import random
+
+from subsystems.audio_out import AudioOut
+
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
+
 
 class Registry():
     def __init__(self):
@@ -44,8 +53,28 @@ class Registry():
     def plug_update(self):
         pass
 
-    def voice_plug_start(self, voice_text):
-        pass
+    def voice_plug_start(self, voice_text="non"):
+        try: 
+            with open("data/setting.json", "r") as f:
+                commands = json.load(f)
+
+            for i in commands:
+                if voice_text == i: 
+                    try:
+                        module = importlib.import_module(f"plugins.{commands.get(i)}.main")
+                        if hasattr(module, 'run'):
+                            module.run()
+                        else:
+                            print(f"In plugin {commands.get(i)} not found run()")
+                    except ModuleNotFoundError as e:
+                        print("Error core/registry.py -> ", e)
+                else:
+                    audio = AudioOut()
+                    audio.play("data/jarvis_wav/what.wav")
+
+
+        except Exception as e:
+            print("Error: core/registry.py voice_plug_start -> ", e)
 
     def plug_start(self):
         
@@ -59,3 +88,4 @@ class Registry():
 if __name__ == '__main__':
     start = Registry()
     start.plug_start()
+    start.voice_plug_start("джарвис")

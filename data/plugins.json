@@ -2,7 +2,6 @@
     "voice": [
         {
             "name": "jarvis",
-            "enabled": true,
             "version": "1.0",
             "description": "Voice assistant plugin",
             "author": "Sakair"

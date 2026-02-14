@@ -7,7 +7,5 @@ class AudioOut():
     def __init__(self):
         pass
 
-    def play(self, text):
-       if text == 'джарвис':
-            print("yes sir")
-            playsound.playsound("data/jarvis_wav/yes_sir.wav")
+    def play(self, file): 
+        playsound.playsound(file)
