@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import importlib
-import random
 
 from subsystems.audio_out import AudioOut
 
@@ -38,7 +37,7 @@ class Registry():
 
     def get_plugins_list(self):
         
-        with open("data/plugins.json", "r") as f:
+        with open("data/plugins.json", "r", encoding='utf-8') as f:
             result = json.load(f)
 
         return result 
@@ -55,9 +54,9 @@ class Registry():
 
     def voice_plug_start(self, voice_text="non"):
         try: 
-            with open("data/setting.json", "r") as f:
+            with open("data/setting.json", "r", encoding='utf-8') as f:
                 commands = json.load(f)
-
+                print(commands)
             for i in commands:
                 if voice_text == i: 
                     try:
