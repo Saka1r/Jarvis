@@ -5,7 +5,14 @@
             "version": "1.0",
             "description": "Voice assistant plugin",
             "author": "Sakair"
+        },
+		{
+            "name": "ai_search",
+            "version": "1.0",
+            "description": "Test",
+            "author": "Sakair"
         }
+
     ],
     "nonvoice": []
 }
