@@ -18,15 +18,15 @@ class Config():
         }
  
     def generate_system_config(self):
-        with open("config/system.json", "w") as f:
+        with open("config/system.json", "w", encoding='utf-8') as f:
             json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
 
     def generate_setting_config(self):
-        with open("data/setting.json", "w") as f:
+        with open("data/setting.json", "w", encoding='utf-8') as f:
             json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
 
     def generate_plugins_config(self):
-        with open("data/plugins.json", "w") as f:
+        with open("data/plugins.json", "w", encoding='utf-8') as f:
             json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
     
     def check_status(self):
