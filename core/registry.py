@@ -4,9 +4,9 @@ import json
 import os
 import sys
 import importlib
-import random
 
 from subsystems.audio_out import AudioOut
+from threading import Thread
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
@@ -63,7 +63,8 @@ class Registry():
                     try:
                         module = importlib.import_module(f"plugins.{commands.get(i)}.main")
                         if hasattr(module, 'run'):
-                            module.run()
+                            tread = Thread(target=module.run())
+                    
                         else:
                             print(f"In plugin {commands.get(i)} not found run()")
                     except ModuleNotFoundError as e:
