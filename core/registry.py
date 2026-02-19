@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import importlib
+import zipfile
 
 from subsystems.audio_out import AudioOut
 from threading import Thread
@@ -31,7 +32,7 @@ class Registry():
             path = "plugins/" + i.get("name")
 
             if not os.path.exists(path):
-                print(f"Plugin {path} not found") 
+                print(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found") 
         #TODO добавить еще для nonvoice, т.к пока нету плагинов для nonvoice я не могу проверять их наличие
 
     def get_plugins_list(self):
@@ -40,9 +41,27 @@ class Registry():
 
         return result 
 
-    def plug_install(self):
+    def plug_install(self, path_to_zip):
         self.plugins = self.get_plugins_list()
-        
+
+        if not os.path.exists(path_to_zip):
+            print("Error: core/registry.py [plug_install] -> path not found")
+        else:
+            try:
+                extract_to_dir = path_to_zip.split("/")[-1].replace(".zip", "")
+                extract_to_dir = "plugins/" + extract_to_dir
+                print(extract_to_dir)
+
+                with zipfile.ZipFile(path_to_zip, "r") as zip_ref:
+                    bad_file = zip_ref.testzip()
+                    if bad_file:
+                        print("Error: core/registry.py [plug_install] -> The file is damaged")
+                    else:
+                        zip_ref.extractall(extract_to_dir)
+                        print("core/registry.py [plug_install] -> plugins installed")
+            except zipfile.BadZipFile:
+                print("Error: core/registry.py [plug_install] -> File is not a zip archive or is heavily corrupted.")
+
     def plug_remove(self):
         pass
 
@@ -67,14 +86,14 @@ class Registry():
                         else:
                             print(f"In plugin {commands.get(i)} not found run()")
                     except ModuleNotFoundError as e:
-                        print("Error core/registry.py -> ", e)
+                        print("Error core/registry.py [voice_plug_start] -> ", e)
 
             if not commands_flag:
                 audio = AudioOut()
                 audio.play("data/jarvis_wav/what.wav")
 
         except Exception as e:
-            print("Error: core/registry.py voice_plug_start -> ", e)
+            print("Error: core/registry.py [voice_plug_start] -> ", e)
 
     def plug_start(self):
         self.plugins = self.get_plugins_list()
@@ -88,3 +107,4 @@ if __name__ == '__main__':
     start = Registry()
     start.plug_start()
     start.voice_plug_start("джарвис")
+    start.plug_install("test.zip")

@@ -32,7 +32,7 @@ class Vosk_STT(STT):
 
     def accept_audio(self, audio_bytes: bytes) -> None:
         if self.recognizer is None:
-            raise RuntimeError("Recognizer not opened")
+            raise RuntimeError("Error: subsystems/vosk_stt.py [accept_audio] -> Recognizer not opened")
 
         if self.recognizer.AcceptWaveform(audio_bytes):
             partial_result = json.loads(self.recognizer.Result())

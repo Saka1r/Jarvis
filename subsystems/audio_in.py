@@ -31,7 +31,7 @@ class AudioOpen():
                 return True
 
             except Exception:
-                logger.exception("Failed to open audio stream")
+                logger.exception("Error: subsystem/audio_in.py [open] -> Failed to open audio stream")
                 self.close()
                 return False
 
@@ -39,7 +39,7 @@ class AudioOpen():
         '''Читает данные из аудио потока, возрашает данные'''
         with self._lock:
             if not self.is_streaming or self.stream is None:
-                raise RuntimeError("Stream is not open")
+                raise RuntimeError("Error: subsystem/audio_in.py [read] -> Stream is not open")
             n = num_frames or self.frames_per_buffer
             return self.stream.read(n, exception_on_overflow=False)
 
@@ -52,7 +52,7 @@ class AudioOpen():
                     self.stream.close()
 
                 except Exception:
-                    logger.exception("Failed to close audio stream")
+                    logger.exception("Error: subsystem/audio_in.py [close] -> Failed to close audio stream")
 
                 finally:
                     self.stream = None
