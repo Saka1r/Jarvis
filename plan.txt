@@ -216,8 +216,7 @@ plugins.json
       "enabled": true
     }
   ],
-  "utility": [],
-  "addon": []
+  "utility": []
 }
 
 
@@ -229,22 +228,19 @@ commands.json
   "commands": [
     {
       "id": "hello",
-      "trigger": "привет",
-      "aliases": ["hi", "hello"],
+      "triggers": ["привет", "здарова"],
       "action": "greet",
       "description": "Приветствие"
     },
     {
       "id": "time",
       "trigger": "время",
-      "aliases": ["сколько времени", "what time"],
       "action": "get_time",
       "description": "Показать время"
     },
     {
       "id": "weather",
       "trigger": "погода",
-      "aliases": ["какая погода", "weather"],
       "action": "get_weather",
       "description": "Показать погоду"
     }

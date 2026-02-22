@@ -1,3 +1,4 @@
 {
-    "джарвис": "jarvis"
+    "engine": "vosk",
+    "language": "ru"
 }

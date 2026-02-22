@@ -3,9 +3,8 @@
         {
             "name": "jarvis",
             "version": "1.0",
-            "description": "Voice assistant plugin",
-            "author": "Sakair"
-        }	
+            "enabled": true
+        }
     ],
-    "nonvoice": []
+    "utility": []
 }

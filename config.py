@@ -5,25 +5,32 @@ import os
 
 class Config():
     def __init__(self):
-       self.standart_plugins = {
+        self.standart_plugins = {
         "voice": [
             {
                 "name": "jarvis",
                 "version": "1.0",
-                "description": "Voice assistant plugin",
-                "author": "Sakair"
+                "enabled": True 
             }
         ],
-        "nonvoice": []
+        "utility": []
+        }
+
+        self.standart_setting = {
+               "engine": "vosk",
+               "language": "ru"
+        }
+
+        self.standart_system = {
         }
  
     def generate_system_config(self):
         with open("config/system.json", "w", encoding='utf-8') as f:
-            json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
+            json.dump(self.standart_system, f, indent=4, ensure_ascii=False)
 
     def generate_setting_config(self):
         with open("data/setting.json", "w", encoding='utf-8') as f:
-            json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
+            json.dump(self.standart_setting, f, indent=4, ensure_ascii=False)
 
     def generate_plugins_config(self):
         with open("data/plugins.json", "w", encoding='utf-8') as f:

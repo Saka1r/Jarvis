@@ -107,4 +107,4 @@ if __name__ == '__main__':
     start = Registry()
     start.plug_start()
     start.voice_plug_start("джарвис")
-    start.plug_install("test.zip")
+    #start.plug_install("test.zip")
