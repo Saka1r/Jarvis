@@ -14,7 +14,6 @@ class Jarvis():
         audio = audio_in.AudioOpen()
         reg = Registry()
 
-        #reg.plug_start()
         vosk.open()
         audio.open()
 
@@ -27,7 +26,7 @@ class Jarvis():
                 answer = vosk.get_result()
                 if answer:
                     print(answer)
-                    #reg.voice_plug_start(answer)
+                    reg.voice_plug_start(answer)
                     #answer = vosk.get_result()
             
         listen()

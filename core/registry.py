@@ -6,9 +6,6 @@ import sys
 import importlib
 import zipfile
 
-from subsystems.audio_out import AudioOut
-from threading import Thread
-
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
 
@@ -96,7 +93,7 @@ class Registry():
                             if callable(method):
                                 method()
                         else:
-                            print(f"Action {action} not found in {i.get('name')} plugin.")
+                            print(f"Error: core/registry.py [voice_plug_start] -> Action {action} not found in {i.get('name')} plugin.")
 
         except Exception as e:
             print("Error: core/registry.py [voice_plug_start] -> ", e)
