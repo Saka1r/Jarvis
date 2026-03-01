@@ -1,7 +1,5 @@
 from subsystems import audio_in
-from subsystems import audio_out
 
-from subsystems.audio_in import AudioOpen
 from subsystems.vosk_stt import Vosk_STT
 
 from core.registry import Registry
@@ -13,11 +11,10 @@ class Jarvis():
     @classmethod    
     def start(cls):
         vosk = Vosk_STT()
-        audio = AudioOpen()
+        audio = audio_in.AudioOpen()
         reg = Registry()
 
         reg.plug_start()
-        audio_o = audio_out.AudioOut()
         vosk.open()
         audio.open()
 
@@ -25,10 +22,14 @@ class Jarvis():
             while True:
                 data = audio.read()
                 vosk.accept_audio(data)
-                
+               
+                print(data)
+
                 # Получаем текст только если есть значимое содержимое
                 answer = vosk.get_result()
                 if answer:
                     print(answer)
-                    reg.voice_plug_start(answer)
+                    #reg.voice_plug_start(answer)
+                    #answer = vosk.get_result()
+            
         listen()

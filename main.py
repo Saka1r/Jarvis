@@ -21,7 +21,10 @@ config_ = Config()
 
 if __name__ == '__main__':
     config_.start() 
-    thread_jarvis = Thread(target=Jarvis.start())
+    
+    thread_jarvis = Thread(target=Jarvis.start)
+    thread_jarvis.start()
+
        
 else:
     print("This is not a module")

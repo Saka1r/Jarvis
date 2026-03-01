@@ -30,7 +30,7 @@ class Registry():
         for i in self.voice_plug:
 
             path = "plugins/" + i.get("name")
-
+    
             if not os.path.exists(path):
                 print(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found") 
         #TODO добавить еще для nonvoice, т.к пока нету плагинов для nonvoice я не могу проверять их наличие
@@ -38,6 +38,10 @@ class Registry():
     def get_plugins_list(self):
         with open("data/plugins.json", "r", encoding='utf-8') as f:
             result = json.load(f)
+        
+        result.get("voice")
+
+        print(result)
 
         return result 
 
@@ -98,13 +102,11 @@ class Registry():
     def plug_start(self):
         self.plugins = self.get_plugins_list()
 
-        #voice_plugs = plugins.get("voice")
-        self.nonvoice_plug = self.plugins.get("nonvoice")
 
          
 
 if __name__ == '__main__':
     start = Registry()
-    start.plug_start()
-    start.voice_plug_start("джарвис")
+    start.get_plugins_list()
+    #start.voice_plug_start("джарвис")
     #start.plug_install("test.zip")
