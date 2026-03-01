@@ -30,6 +30,10 @@ Jarvis has a main executable file main.py, which in turn launches Jarvis and con
 python main.py
 ```
 
-## Overview
+## Обзор
 
 У Джарвиса есть основной исполняемый файл main.py, который, в свою очередь, запускает Джарвиса и config.py. И Jarvis запускает свои подсистемы. Вся структура написана в plan.txt
+
+## Структура Джарвиса
+
+Структура изложена в plan.txt
