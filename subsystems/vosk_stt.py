@@ -8,7 +8,7 @@ class Vosk_STT(STT):
         with open("data/setting.json", "r", encoding='utf-8') as f:
             commands = json.load(f)
 
-        self.commands = list(commands.keys())
+        self.commands = ["джарвис"]#list(commands.keys())
         self.commands = json.dumps(self.commands, ensure_ascii=False)
 
         self.model_path = model_path
@@ -20,7 +20,7 @@ class Vosk_STT(STT):
 
     def open(self) -> bool:
         try:
-            self.model = Model(self.model_path, lang="ru")
+            self.model = Model(self.model_path)
             self.recognizer = KaldiRecognizer(self.model, self.sample_rate, self.commands)
             return True
         except Exception:
@@ -40,8 +40,7 @@ class Vosk_STT(STT):
             
             # Накапливаем текст с пробелом
             if new_text:
-                self.accumulated_text += new_text + " "
-        
+                self.accumulated_text += new_text + " " 
                 return self.accumulated_text
 
     def get_result(self) -> str:

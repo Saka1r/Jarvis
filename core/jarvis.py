@@ -14,16 +14,14 @@ class Jarvis():
         audio = audio_in.AudioOpen()
         reg = Registry()
 
-        reg.plug_start()
+        #reg.plug_start()
         vosk.open()
         audio.open()
 
         def listen():
             while True:
                 data = audio.read()
-                vosk.accept_audio(data)
-               
-                print(data)
+                vosk.accept_audio(data) 
 
                 # Получаем текст только если есть значимое содержимое
                 answer = vosk.get_result()
