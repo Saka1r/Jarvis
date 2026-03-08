@@ -1,0 +1,9 @@
+{
+  "name": "jarvis",
+  "version": "1.0.0",
+  "type": "voice",
+  "description": "Voice assistant plugin",
+  "author": "Sakair",
+  "main": "main.py",
+  "entry": "JarvisPlugin"
+}
