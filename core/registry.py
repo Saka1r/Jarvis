@@ -1,4 +1,4 @@
-#core/registry.py
+# core/registry.py
 
 import json
 import os
@@ -6,38 +6,66 @@ import sys
 import importlib
 import zipfile
 
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
-
-class Registry():
+class Registry:
     def __init__(self):
         self.plugins = None
         self.utility_plug = None
         self.voice_plug = None
-        self.plug_config_file = None 
+        self.plug_config_file = None
 
         self.check_plugins()
+        self.commands = self.load_commands()
+
+    def load_commands(self):
+        commands = [] 
+        plugins_dir = "plugins"
+        
+        # Проходимся по всем плагинам
+        for plugin_name in os.listdir(plugins_dir):
+            plugin_path = os.path.join(plugins_dir, plugin_name)
+            
+            if os.path.isdir(plugin_path):
+                commands_file_path = os.path.join(plugin_path, "commands.json")
+                
+                # Если файл commands.json существует, загружаем его
+                if os.path.isfile(commands_file_path):
+                    with open(commands_file_path, "r", encoding='utf-8') as f:
+                        plugin_commands = json.load(f)
+                        # Собираем команды в общий список
+                        for command in plugin_commands.get("commands", []):
+                            commands.extend(command['triggers'])
+
+        # Удаляем дубликаты, если нужно, преобразуя в множество
+        commands = list(set(commands))
+        
+        return json.dumps(commands, ensure_ascii=False)
+
+    def is_command(self, text):
+        if text in self.commands:
+            return True
 
     def check_plugins(self):
-        self.plugins = self.get_plugins_list() 
+        self.plugins = self.get_plugins_list()
 
         self.voice_plug = self.plugins.get("voice")
         self.utility_plug = self.plugins.get("utility")
-        
+
         for i in self.voice_plug:
             path = "plugins/" + i.get("name")
-    
-            if not os.path.exists(path):
-                print(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found") 
 
-        #TODO добавить еще для utility
+            if not os.path.exists(path):
+                print(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found")
+
+        # TODO добавить еще для utility
 
     def get_plugins_list(self):
-        with open("data/plugins.json", "r", encoding='utf-8') as f:
-            result = json.load(f) 
+        with open("data/plugins.json", "r", encoding="utf-8") as f:
+            result = json.load(f)
 
-        return result 
+        return result
 
     def plug_install(self, path_to_zip):
         self.plugins = self.get_plugins_list()
@@ -58,7 +86,9 @@ class Registry():
                         zip_ref.extractall(extract_to_dir)
                         print("core/registry.py [plug_install] -> plugins installed")
             except zipfile.BadZipFile:
-                print("Error: core/registry.py [plug_install] -> File is not a zip archive or is heavily corrupted.")
+                print(
+                    "Error: core/registry.py [plug_install] -> File is not a zip archive or is heavily corrupted."
+                )
 
     def plug_remove(self):
         pass
@@ -71,29 +101,31 @@ class Registry():
             self.voice_plug = self.get_plugins_list().get("voice")
             for i in self.voice_plug:
                 path = "plugins/" + i.get("name")
-                
-                with open(f"{path}/commands.json", "r", encoding='utf-8') as f:
-                    file_config = json.load(f)
-                
-                with open(f"{path}/plugin.json", "r", encoding='utf-8') as f:
-                    file_plug = json.load(f) 
 
-                #Импортируем плагины
-                plugin_module = importlib.import_module(f'plugins.{i.get("name")}.main')
+                with open(f"{path}/commands.json", "r", encoding="utf-8") as f:
+                    file_config = json.load(f)
+
+                with open(f"{path}/plugin.json", "r", encoding="utf-8") as f:
+                    file_plug = json.load(f)
+
+                # Импортируем плагины
+                plugin_module = importlib.import_module(f"plugins.{i.get('name')}.main")
                 plugin_class = getattr(plugin_module, file_plug["entry"])
                 plugin_instance = plugin_class()
 
                 # Проверка триггеров
                 for command in file_config.get("commands", []):
-                    if voice_text in command['triggers']:
-                        action = command.get('action')
+                    if voice_text in command["triggers"]:
+                        action = command.get("action")
                         # Вызов соответствующего метода
                         if hasattr(plugin_instance, action):
                             method = getattr(plugin_instance, action)
                             if callable(method):
                                 method()
                         else:
-                            print(f"Error: core/registry.py [voice_plug_start] -> Action {action} not found in {i.get('name')} plugin.")
+                            print(
+                                f"Error: core/registry.py [voice_plug_start] -> Action {action} not found in {i.get('name')} plugin."
+                            )
 
         except Exception as e:
             print("Error: core/registry.py [voice_plug_start] -> ", e)
@@ -101,17 +133,20 @@ class Registry():
     def plug_start(self, flag, voice_text="None"):
         if flag == "voice":
             if voice_text == "None":
-                print("Error: core/registry.py [plug_install] -> voice_text for voice commands: None")
+                print(
+                    "Error: core/registry.py [plug_install] -> voice_text for voice commands: None"
+                )
             else:
                 self.voice_plug_start(voice_text)
         elif flag == "utility":
             pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     start = Registry()
     start.get_plugins_list()
-    
+
     start.voice_plug_start("здарова")
 
-    #start.voice_plug_start("джарвис")
-    #start.plug_install("test.zip")
+    # start.voice_plug_start("джарвис")
+    # start.plug_install("test.zip")

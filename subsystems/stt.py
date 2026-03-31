@@ -1,9 +1,9 @@
-#subsystem/stt.py
+# subsystem/stt.py
 
 from abc import ABC, abstractmethod
 
-class STT(ABC):
 
+class STT(ABC):
     """Абстрактный интерфейс"""
 
     @abstractmethod
@@ -25,4 +25,3 @@ class STT(ABC):
     def get_result(self) -> str:
         """Вернуть финальный текст (или пустую строку)."""
         pass
-

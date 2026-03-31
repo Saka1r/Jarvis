@@ -1,3 +1,4 @@
 __pychache__/
 core/__pychache__/
 subsystem/__pychache__/
+.pylintrc

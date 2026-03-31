@@ -11,20 +11,23 @@
 #
 # """--------------------------------------------------------------------------"""
 
+import asyncio
+
 from core.jarvis import Jarvis
 
 from config import Config
 
-from threading import Thread
-
-config_ = Config()
-
-if __name__ == '__main__':
+async def main():
+    config_ = Config()
+    
     config_.start() 
     
-    thread_jarvis = Thread(target=Jarvis.start())
-  #  thread_jarvis.start()
+    try:
+        await Jarvis.start()
+    except KeyboardInterrupt:
+        print("\nJarvis stopped by user.")
 
-       
+if __name__ == "__main__":
+    asyncio.run(main())
 else:
     print("This is not a module")

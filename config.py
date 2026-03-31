@@ -1,44 +1,34 @@
-#config.py
+# config.py
 
 import json
 import os
 
-class Config():
+
+class Config:
     def __init__(self):
         self.standart_plugins = {
-        "voice": [
-            {
-                "name": "jarvis",
-                "version": "1.0",
-                "enabled": True 
-            }
-        ],
-        "utility": []
+            "voice": [{"name": "jarvis", "version": "1.0", "enabled": True}],
+            "utility": [],
         }
 
-        self.standart_setting = {
-               "engine": "vosk",
-               "language": "ru"
-        }
+        self.standart_setting = {"engine": "vosk", "language": "ru"}
 
-        self.standart_system = {
-        }
- 
+        self.standart_system = {}
+
     def generate_system_config(self):
-        with open("config/system.json", "w", encoding='utf-8') as f:
+        with open("config/system.json", "w", encoding="utf-8") as f:
             json.dump(self.standart_system, f, indent=4, ensure_ascii=False)
 
     def generate_setting_config(self):
-        with open("data/setting.json", "w", encoding='utf-8') as f:
+        with open("data/setting.json", "w", encoding="utf-8") as f:
             json.dump(self.standart_setting, f, indent=4, ensure_ascii=False)
 
     def generate_plugins_config(self):
-        with open("data/plugins.json", "w", encoding='utf-8') as f:
+        with open("data/plugins.json", "w", encoding="utf-8") as f:
             json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
-    
-    def check_status(self):
 
-        '''проверяет файлы конфигурации, системы, плагинов'''
+    def check_status(self):
+        """проверяет файлы конфигурации, системы, плагинов"""
 
         if not os.path.exists("config/system.json"):
             print("Error: config/system.json not found -> create config/system.json")
