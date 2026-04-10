@@ -7,6 +7,7 @@ import torch
 
 from TTS.api import TTS as CoquiTTS
 from subsystems.tts import TTS
+from subsystems.audio_out import AudioOut
 
 class TTS_Manager:
     def __init__(self):
@@ -38,6 +39,8 @@ class TTS_Manager:
 
     def _play_audio(self, file_path):
         """Воспроизведение"""
+        audio = AudioOut()
+        audio.play(file_path)
         pass
 
     def stop(self):
@@ -47,14 +50,14 @@ class Coqui_TTS(TTS):
     def __init__(self):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.model = None
-        self.speaker_wav = "new_reference_jar.wav"
-        self.output_dir = "data/output_wav"
+        self.speaker_wav = "data/new_reference_jar.wav"
+        self.output_dir = "data/output_wav/"
         
         os.makedirs(self.output_dir, exist_ok=True)
 
     def open(self):
         """Ленивая загрузка модели (можно вызвать отдельно)"""
-        try:
+        try: 
             print(f"Loading TTS model on {self.device}...")
             self.model = CoquiTTS("tts_models/multilingual/multi-dataset/xtts_v2").to(self.device)
             print("TTS model loaded.")
@@ -79,7 +82,7 @@ class Coqui_TTS(TTS):
                 text=text, 
                 speaker_wav=self.speaker_wav, 
                 language="ru", 
-                file_path=file_path
+                file_path=file_path   
             )
             return file_path
         except Exception as e:
@@ -93,3 +96,8 @@ class Coqui_TTS(TTS):
                 os.remove(file_path)
         except Exception:
             pass
+
+if __name__ == '__main__':
+    tets = Coqui_TTS()
+    tets.open()
+    tets.generate("Привет я Джарвис")
