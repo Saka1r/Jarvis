@@ -11,6 +11,18 @@
 #
 # """--------------------------------------------------------------------------"""
 
+import logging
+import sys
+
+logging.basicConfig(
+    level=logging.DEBUG,  # Показываем всё, включая отладку аудио
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+    handlers=[logging.StreamHandler(sys.stdout)]
+)
+# Для отладки Vosk включим логи самой библиотеки
+logging.getLogger("vosk").setLevel(logging.DEBUG)
+
 import asyncio
 
 from core.jarvis import Jarvis

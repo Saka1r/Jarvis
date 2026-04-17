@@ -4,8 +4,58 @@
       "id": "hello",
       "triggers": ["привет", "здарова"],
       "action": "greet",
-      "description": "Приветствие"
-    } 
+      "description": "Приветствие",
+      "priority": "background"
+    },
+    {
+      "id": "browser",
+      "triggers": ["открой браузер", "браузер", "интернет"],
+      "action": "browser",
+      "description": "открытие браузера",
+      "priority": "background"
+    },
+    {
+      "id": "code",
+      "triggers": ["открой редактор кода", "за работу", "работать", "начинаем работу"],
+      "action": "goWork",
+      "description": "открытие vscode",
+      "priority": "background"
+    },
+    {
+      "id": "soundDown",
+      "triggers": ["потише", "уменьши звук", "уменьшить звук", "сделай потише", "тише"],
+      "action": "soundDown",
+      "description": "уменьшает звук",
+      "priority": "background"
+    },
+    {
+      "id": "soundOff",
+      "triggers": ["отключи звук", "выключи звук", "без звука"],
+      "action": "soundOff",
+      "description": "выключает звук",
+      "priority": "background"
+    },
+    {
+      "id": "soundUp",
+      "triggers": ["увеличить звук", "погромче", "увеличь звук", "громче"],
+      "action": "soundUp",
+      "description": "увеличивает звук",
+      "priority": "background"
+    },
+    {
+      "id": "youtube",
+      "triggers": ["давай посмотрим ютуб", "ютуб", "открой ютуб"],
+      "action": "youtube",
+      "description": "открывает ютуб",
+      "priority": "background"
+    },
+    {
+      "id": "music",
+      "triggers": ["музыка", "включи музыку", "давай послушаем музыку"],
+      "action": "music",
+      "description": "включит музыку из youtube",
+      "priority": "background"
+    }
   ]
 }
 
