@@ -8,6 +8,7 @@ from typing import Optional
 from enum import Enum, auto
 
 from subsystems import audio_in
+from subsystems import audio_out
 from subsystems.vosk_stt import Vosk_STT
 from subsystems.coqui_tts import TTS_Manager
 from subsystems.llama_llm import LlamaLLM
@@ -19,6 +20,7 @@ class AgentState(Enum):
     COMMAND = auto()  # Ожидание wake-word или команды плагина
     FREE = auto()     # Диалог с LLM
     SPEAKING = auto() # Воспроизведение ответа (STT временно отключен)
+    WAIT = auto() # Ожидание wake-word для перехода в режим команд, то есть без реагирования
 
 class Jarvis:
     def __init__(self):
@@ -29,6 +31,7 @@ class Jarvis:
         self.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="JarvisWorker")
         self.vosk: Optional[Vosk_STT] = None
         self.audio: Optional[audio_in.AudioOpen] = None
+        self.audio_out = audio_out.AudioOut()
         self.reg: Optional[Registry] = None
         
         self.tts_manager = TTS_Manager()
@@ -48,6 +51,8 @@ class Jarvis:
             self.audio.open()
             self.llm.load()
             self.tts_manager.start()
+
+            self.vosk.set_grammar()
 
             logger.info("🎤 Jarvis запущен. Ожидание команд...")
             await asyncio.gather(
@@ -102,10 +107,21 @@ class Jarvis:
     async def handle_input(self, text: str):
         text_lower = text.lower()
 
+        # ____________________ РЕЖИМ КОМАНД ____________________
         if self.state == AgentState.COMMAND:
-            if "джарвис" in text_lower:
+            # ___ ПЕРЕХОД В LLM ___
+            if "режим диалога" in text_lower:
                 self.state = AgentState.FREE
+                self.vosk.clear_grammar()
                 logger.info("🔓 Режим диалога активирован")
+                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
+                return
+            
+            if "режим ожидания" in text_lower:
+                self.state = AgentState.WAIT
+                self.vosk.clear_grammar()
+                logger.info("🔓 Режим ожидания активирован")
+                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
                 return
 
             if self.reg.is_command(text):
@@ -113,6 +129,16 @@ class Jarvis:
             else:
                 logger.info("⚠️ Команда не распознана")
 
+        # ____________________ РЕЖИМ ОЖИДАНИЯ ____________________
+        if self.state == AgentState.WAIT:
+            if "отключить режим ожидания" in text_lower or "джарвис" in text_lower:
+                self.state = AgentState.COMMAND
+                self.vosk.set_grammar()
+                logger.info("🔓 Режим команд активирован")
+                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
+                return
+
+        # ____________________ РЕЖИМ LLM ____________________
         elif self.state == AgentState.FREE:
             logger.info(f"🤔 Думаю над фразой: {text}")
             self.state = AgentState.SPEAKING  # Блокируем STT до конца ответа
@@ -128,6 +154,7 @@ class Jarvis:
             finally:
                 self.state = AgentState.COMMAND
                 logger.info("🔒 Режим диалога завершён")
+                #self.vosk.set_grammar()
 
     async def _speak_and_wait(self, text: str):
         """Асинхронно ждет завершения синтеза и воспроизведения."""
