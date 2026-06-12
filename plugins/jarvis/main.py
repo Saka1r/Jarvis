@@ -12,15 +12,13 @@ if os.name == 'nt':
 class JarvisPlugin(BasePlugin):
     def greet(self):
 
-        file = [
+        files = [
             "data/jarvis_wav/at_you_service.wav",
             "data/jarvis_wav/at_you_service_2.wav",
             "data/jarvis_wav/yes_sir.wav"
         ]
 
-        int_ = random.randint(0, 2)
-
-        self.audio_out.play(file[int_])
+        self.audio_out.play(random.choice(files))
         
     def browser(self):
         self.greet()
