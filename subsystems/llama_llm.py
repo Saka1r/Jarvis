@@ -7,7 +7,7 @@ from llama_cpp import Llama
 class LlamaLLM:
     def __init__(
         self, 
-        model_path: str = "data/llama-7b-chat.gguf",
+        model_path: str = "data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
         n_ctx: int = 4096,
         n_gpu_layers: int = -1,
         n_threads: int = 8,
@@ -92,6 +92,8 @@ class LlamaLLM:
         return await asyncio.to_thread(self.generate, user_input, context)
 
 if __name__ == "__main__":
+
     llm = LlamaLLM()
     llm.load()
-    print("🔹 Тест:", llm.generate("Привет кто ты?"))
+    #print("🔹 Тест:", llm.generate("Привет кто ты?"))
+    

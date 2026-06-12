@@ -2,5 +2,6 @@ __pychache__/
 core/__pychache__/
 subsystem/__pychache__/
 .pylintrc
-/data/llama-7b-chat.gguf
+/data/models/llama-7b-chat.gguf
+data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf
 jarvis2.0_start.lnk

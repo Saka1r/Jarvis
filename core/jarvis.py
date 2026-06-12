@@ -32,11 +32,12 @@ class Jarvis:
         self.vosk: Optional[Vosk_STT] = None
         self.audio: Optional[audio_in.AudioOpen] = None
         self.audio_out = audio_out.AudioOut()
-        self.reg: Optional[Registry] = None
         
         self.tts_manager = TTS_Manager()
         self.llm = LlamaLLM()
         self.commands_queue = asyncio.Queue(maxsize=10)
+
+        self.reg: Optional[Registry] = None
 
     @classmethod
     async def start(cls):
@@ -45,7 +46,13 @@ class Jarvis:
         try:
             self.vosk = Vosk_STT()
             self.audio = audio_in.AudioOpen()
-            self.reg = Registry()
+            self.reg = Registry(systems={
+                "audio_out": self.audio_out,
+                "llm": self.llm,
+                "tts": self.tts_manager,
+                "vosk": self.vosk,
+                "audio_in": self.audio
+            })
 
             self.vosk.open()
             self.audio.open()

@@ -2,16 +2,15 @@ import random
 import os
 import webbrowser
 
-from subsystems.audio_out import AudioOut
+from core.base_plugin import BasePlugin 
 
 if os.name == 'nt':
     from ctypes import cast, POINTER
     from comtypes import CLSCTX_ALL
     from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
 
-class JarvisPlugin:
+class JarvisPlugin(BasePlugin):
     def greet(self):
-        audio_out_ = AudioOut()
 
         file = [
             "data/jarvis_wav/at_you_service.wav",
@@ -21,7 +20,7 @@ class JarvisPlugin:
 
         int_ = random.randint(0, 2)
 
-        audio_out_.play(file[int_])
+        self.audio_out.play(file[int_])
         
     def browser(self):
         self.greet()

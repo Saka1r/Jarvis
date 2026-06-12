@@ -10,7 +10,10 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 class Registry:
-    def __init__(self):
+    def __init__(self, systems=None):
+        self.systems = systems or {} 
+        self._plugin_cache = {} 
+
         self.plugins = None
         self.utility_plug = None
         self.voice_plug = None
@@ -113,33 +116,34 @@ class Registry:
         try:
             self.voice_plug = self.get_plugins_list().get("voice")
             for i in self.voice_plug:
-                path = "plugins/" + i.get("name")
+                plugin_name = i.get("name")
+                path = f"plugins/{plugin_name}"
 
-                with open(f"{path}/commands.json", "r", encoding="utf-8") as f:
-                    file_config = json.load(f)
+                if plugin_name not in self._plugin_cache:
+                    with open(f"{path}/commands.json", "r", encoding="utf-8") as f:
+                        file_config = json.load(f)
+                    with open(f"{path}/plugin.json", "r", encoding="utf-8") as f:
+                        file_plug = json.load(f)
 
-                with open(f"{path}/plugin.json", "r", encoding="utf-8") as f:
-                    file_plug = json.load(f)
+                    plugin_module = importlib.import_module(f"plugins.{plugin_name}.main")
+                    plugin_class = getattr(plugin_module, file_plug["entry"])
+                    
+                    self._plugin_cache[plugin_name] = {
+                        "instance": plugin_class(self.systems),
+                        "config": file_config
+                    }
+                
+                cached = self._plugin_cache[plugin_name]
+                plugin_instance = cached["instance"]
+                file_config = cached["config"]
 
-                # Импортируем плагины
-                plugin_module = importlib.import_module(f"plugins.{i.get('name')}.main")
-                plugin_class = getattr(plugin_module, file_plug["entry"])
-                plugin_instance = plugin_class()
-
-                # Проверка триггеров
                 for command in file_config.get("commands", []):
                     if voice_text in command["triggers"]:
                         action = command.get("action")
-                        # Вызов соответствующего метода
                         if hasattr(plugin_instance, action):
-                            method = getattr(plugin_instance, action)
-                            if callable(method):
-                                method()
+                            getattr(plugin_instance, action)()
                         else:
-                            print(
-                                f"Error: core/registry.py [voice_plug_start] -> Action {action} not found in {i.get('name')} plugin."
-                            )
-
+                            print(f"Error: Action {action} not found in {plugin_name}")
         except Exception as e:
             print("Error: core/registry.py [voice_plug_start] -> ", e)
 
