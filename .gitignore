@@ -5,3 +5,4 @@ subsystem/__pychache__/
 /data/models/llama-7b-chat.gguf
 data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf
 jarvis2.0_start.lnk
+*.py[cod]
