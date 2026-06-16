@@ -55,6 +55,13 @@
       "action": "music",
       "description": "включит музыку из youtube",
       "priority": "background"
+    },
+    {
+      "id": "sysmonitor",
+      "triggers": ["джарвис статус системы", "статус системы", "джарвис загрузка процессора", "сколько памяти"],
+      "action": "get_system_status",
+      "description": "мониторинг ресурсов системы",
+      "priority": "background"
     }
   ]
 }
