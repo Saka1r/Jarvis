@@ -1,0 +1,46 @@
+site_name: J.A.R.V.I.S. Documentation
+site_description: Документация голосового ассистента J.A.R.V.I.S.
+site_url: https://sakair.github.io/jarvis/
+repo_url: https://github.com/Saka1r/jarvis
+repo_name: Saka1r/jarvis
+
+theme:
+  name: material
+  language: ru
+  palette:
+    - scheme: slate
+      primary: deep purple
+      accent: red
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - content.code.copy
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Главная: index.md
+  - О проекте: about.md
+  - Установка: install.md
+  - Архитектура: architecture.md
+  - Плагины:
+    - Обзор: plugins/index.md
+    - Создание плагина: plugins/creating.md

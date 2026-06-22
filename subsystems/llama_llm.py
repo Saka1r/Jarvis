@@ -36,6 +36,7 @@ class LlamaLLM:
                 n_threads=self.n_threads,
                 n_batch=512,
                 verbose=False
+                #chat_format="chatml" # Для function calling
             )
             self._loaded = True
             print("✅ LLM model loaded successfully.")

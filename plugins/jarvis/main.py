@@ -1,5 +1,7 @@
 # plugins/jarvis/main.py
 
+'''Standart commands for Jarvis'''
+
 import random
 import os
 import webbrowser
