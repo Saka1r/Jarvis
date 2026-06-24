@@ -12,3 +12,73 @@ plugins/my_plugin/
 
 - `jarvis` — базовые команды (браузер, музыка, громкость)
 
+plugins/jarvis/commands.json
+```json
+{
+  "commands": [
+    {
+      "id": "hello",
+      "triggers": ["привет", "здарова", "джарвис"],
+      "action": "greet",
+      "description": "Приветствие",
+      "priority": "background"
+    },
+    {
+      "id": "browser",
+      "triggers": ["открой браузер", "браузер", "интернет", "джарвис открой браузер", "джарвис браузер", "джарвис интернет"],
+      "action": "browser",
+      "description": "открытие браузера",
+      "priority": "background"
+    },
+    {
+      "id": "code",
+      "triggers": ["джарвис редактор кода", "джарвис открой редактор кода", "открой редактор кода", "за работу", "джарвис за работу", "джарвис работать", "работать", "начинаем работу",  "джарвис начинаем работу"],
+      "action": "goWork",
+      "description": "открытие vscode",
+      "priority": "background"
+    },
+    {
+      "id": "soundDown",
+      "triggers": ["джарвис потише", "потише", "уменьши звук", "уменьшить звук", "сделай потише", "тише"],
+      "action": "soundDown",
+      "description": "уменьшает звук",
+      "priority": "background"
+    },
+    {
+      "id": "soundOff",
+      "triggers": ["отключи звук", "выключи звук", "без звука"],
+      "action": "soundOff",
+      "description": "выключает звук",
+      "priority": "background"
+    },
+    {
+      "id": "soundUp",
+      "triggers": ["увеличить звук", "погромче", "увеличь звук", "громче"],
+      "action": "soundUp",
+      "description": "увеличивает звук",
+      "priority": "background"
+    },
+    {
+      "id": "youtube",
+      "triggers": ["давай посмотрим ютуб", "ютуб", "открой ютуб"],
+      "action": "youtube",
+      "description": "открывает ютуб",
+      "priority": "background"
+    },
+    {
+      "id": "music",
+      "triggers": ["музыка", "включи музыку", "давай послушаем музыку"],
+      "action": "music",
+      "description": "включит музыку из youtube",
+      "priority": "background"
+    },
+    {
+      "id": "sysmonitor",
+      "triggers": ["джарвис статус системы", "статус системы", "джарвис загрузка процессора", "сколько памяти"],
+      "action": "get_system_status",
+      "description": "мониторинг ресурсов системы",
+      "priority": "background"
+    }
+  ]
+}
+```

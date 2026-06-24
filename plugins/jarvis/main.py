@@ -44,7 +44,15 @@ class JarvisPlugin(BasePlugin):
 
     def goWork(self) -> None:
         self.greet()
-        os.startfile(r"D:\VS Code\Microsoft VS Code\Code.exe")
+        try:
+            if os.name == 'nt':
+                import subprocess
+                subprocess.Popen(["code"]) 
+            else:
+                import subprocess
+                subprocess.Popen(["code"])
+        except Exception as e:
+            print(f"Error: Could not open VS Code: {e}")
         return None
 
     def _get_volume_interface(self):

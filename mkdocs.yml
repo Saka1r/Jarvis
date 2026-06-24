@@ -44,3 +44,4 @@ nav:
   - Плагины:
     - Обзор: plugins/index.md
     - Создание плагина: plugins/creating.md
+    - Использование подсистем: plugins/subsystems.md
