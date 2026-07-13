@@ -7,12 +7,14 @@ from typing import Optional
 
 from enum import Enum, auto
 
+from core.registry import Registry
+from core.context import ContextManager
+
 from subsystems import audio_in
 from subsystems import audio_out
 from subsystems.vosk_stt import Vosk_STT
 from subsystems.coqui_tts import TTS_Manager
 from subsystems.llama_llm import LlamaLLM
-from core.registry import Registry
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +37,9 @@ class Jarvis:
         
         self.tts_manager = TTS_Manager()
         self.llm = LlamaLLM()
+
+        self.context = ContextManager(max_turns=6) 
+
         self.commands_queue = asyncio.Queue(maxsize=10)
 
         self.reg: Optional[Registry] = None
@@ -148,20 +153,28 @@ class Jarvis:
         # ____________________ РЕЖИМ LLM ____________________
         elif self.state == AgentState.FREE:
             logger.info(f"🤔 Думаю над фразой: {text}")
-            self.state = AgentState.SPEAKING  # Блокируем STT до конца ответа
+            self.state = AgentState.SPEAKING
+            
+            self.context.add_message("user", text)
+            
             try:
-                response = await asyncio.to_thread(self.llm.generate, text)
+                messages_for_llm = self.context.get_messages_for_llm()
+                response = await self.llm.async_generate(context_messages=messages_for_llm)
+                
                 if response and response.strip():
                     logger.info(f"💬 Джарвис: {response}")
+                    self.context.add_message("assistant", response)
                     await self._speak_and_wait(response)
             except Exception as e:
                 logger.error(f"LLM/TTS pipeline failed: {e}")
-                self.tts_manager.add_to_queue("Произошла ошибка. Повторите команду.")
-                await self._tts_done_event.wait()
+                try:
+                    self.tts_manager.queue.put_nowait("Произошла ошибка, сэр. Повторите команду.")
+                    await self._tts_done_event.wait()
+                except Exception as tts_error:
+                    logger.error(f"TTS queue error: {tts_error}")
             finally:
                 self.state = AgentState.COMMAND
                 logger.info("🔒 Режим диалога завершён")
-                #self.vosk.set_grammar()
 
     async def _speak_and_wait(self, text: str):
         """Асинхронно ждет завершения синтеза и воспроизведения."""

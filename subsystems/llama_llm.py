@@ -4,6 +4,16 @@ import os
 from typing import List, Dict, Optional
 from llama_cpp import Llama
 
+JARVIS_SYSTEM_PROMPT = """Ты — J.A.R.V.I.S., локальный искусственный интеллект и личный помощник. Твоя задача — давать точные и полезные ответы.
+Твой стиль: сдержанный, профессиональный, как дворецкий Тони Старка. Обращайся к пользователю "сэр".
+
+СТРОГИЕ ПРАВИЛА:
+1. Отвечай ТОЛЬКО на русском языке.
+2. Максимальная краткость: 1-3 предложения. Никаких списков, "воды" и эмодзи.
+3. АБСОЛЮТНЫЙ ЗАПРЕТ на шаблонные фразы в начале ответа: "Чем могу помочь?", "Добро пожаловать", "Готов ответить". Если пользователь задал вопрос, начинай ответ СРАЗУ с сути.
+
+"""
+
 class LlamaLLM:
     def __init__(
         self, 
@@ -11,7 +21,7 @@ class LlamaLLM:
         n_ctx: int = 4096,
         n_gpu_layers: int = -1,
         n_threads: int = 8,
-        max_tokens: int = 300
+        max_tokens: int = 256
     ):
         self.model_path = model_path
         self.n_ctx = n_ctx
@@ -35,8 +45,8 @@ class LlamaLLM:
                 n_gpu_layers=self.n_gpu_layers,
                 n_threads=self.n_threads,
                 n_batch=512,
-                verbose=False
-                #chat_format="chatml" # Для function calling
+                verbose=False,
+                chat_format="llama-3" 
             )
             self._loaded = True
             print("✅ LLM model loaded successfully.")
@@ -45,42 +55,32 @@ class LlamaLLM:
             print(f"❌ Failed to load LLM: {e}")
             return False
 
-    def unload(self):
-        if self._llm:
-            del self._llm
-            self._llm = None
-            self._loaded = False
-
-    def generate(self, user_input: str, context: Optional[List[Dict]] = None) -> str:
+    def generate(self, context_messages: List[Dict]) -> str:
+        """
+        Принимает ТОЛЬКО контекст (историю диалога).
+        user_input уже добавлен в context_messages через context.add_message("user", text)
+        """
         if not self._loaded or self._llm is None:
-            raise RuntimeError("LLM model not loaded. Call load() first.")
+            raise RuntimeError("LLM model not loaded.")
 
-        # Формируем сообщения в формате OpenAI Chat
-        messages = [
-            {
-                "role": "system", 
-                "content": (
-                    "Ты — Джарвис, вежливый и доброжелательный помощник. Всегда добавляй сэр в твой ответ."
-                    "Отвечай ИСКЛЮЧИТЕЛЬНО НА РУССКОМ ЯЗЫКЕ. "
-                    "Будь краток (1-3 предложения), отвечай строго по делу. "
-                    "Не используй списки, маркировку или форматы типа A:/B:/C:. "
-                    "Если не знаешь точного ответа, так и скажи: 'Не уверен, но могу уточнить'."
-                )
-            }
-        ]
+        messages = [{"role": "system", "content": JARVIS_SYSTEM_PROMPT}]
         
-        if context:
-            messages.extend(context)
-        messages.append({"role": "user", "content": user_input})
+        if context_messages:
+            messages.extend(context_messages)
+
+        # 🔍 ДЕБАГ:
+        print("\n" + "="*80)
+        print("📤 ОТПРАВЛЯЮ В LLM:")
+        for i, msg in enumerate(messages):
+            print(f"[{i}] {msg['role'].upper()}: {msg['content'][:80]}...")
+        print("="*80 + "\n")
 
         response = self._llm.create_chat_completion(
             messages=messages,
             max_tokens=self.max_tokens,
-            temperature=0.2,
+            temperature=0.1,  # холоднее для предсказуемости
             top_p=0.9,
-            top_k=40,
-            repeat_penalty=1.1,
-            # stop_tokens убраны: чат-формат сам корректно останавливает генерацию
+            repeat_penalty=1.15,
         )
 
         try:
@@ -88,12 +88,17 @@ class LlamaLLM:
         except (KeyError, IndexError, TypeError) as e:
             return f"[Ошибка генерации: {str(e)}]"
 
-    async def async_generate(self, user_input: str, context: Optional[List[Dict]] = None) -> str:
-        """Асинхронная обёртка. Не блокирует asyncio event loop."""
-        return await asyncio.to_thread(self.generate, user_input, context)
+    async def async_generate(self, context_messages: List[Dict]) -> str:
+        """Асинхронная обёртка. Сигнатура должна совпадать с generate()."""
+        return await asyncio.to_thread(self.generate, context_messages)
+
+    def unload(self):
+        if self._llm:
+            del self._llm
+            self._llm = None
+            self._loaded = False
 
 if __name__ == "__main__":
-
     llm = LlamaLLM()
     llm.load()
     #print("🔹 Тест:", llm.generate("Привет кто ты?"))
