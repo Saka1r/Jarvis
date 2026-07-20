@@ -159,12 +159,26 @@ class Jarvis:
             
             try:
                 messages_for_llm = self.context.get_messages_for_llm()
-                response = await self.llm.async_generate(context_messages=messages_for_llm)
+                raw_response = await self.llm.async_generate(context_messages=messages_for_llm)
                 
-                if response and response.strip():
-                    logger.info(f"💬 Джарвис: {response}")
-                    self.context.add_message("assistant", response)
-                    await self._speak_and_wait(response)
+                thought = ""
+                speech = ""
+                
+                if "<thought>" in raw_response and "</thought>" in raw_response:
+                    thought = raw_response.split("<thought>")[1].split("</thought>")[0].strip()
+                
+                if "<response>" in raw_response and "</response>" in raw_response:
+                    speech = raw_response.split("<response>")[1].split("</response>")[0].strip()
+                else:
+                    speech = raw_response.strip()
+
+                if thought:
+                    logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
+                
+                if speech and speech.strip():
+                    logger.info(f"💬 ДЖАРВИС ГОВОРИТ: {speech}")
+                    self.context.add_message("assistant", speech)
+                    await self._speak_and_wait(speech)
             except Exception as e:
                 logger.error(f"LLM/TTS pipeline failed: {e}")
                 try:
