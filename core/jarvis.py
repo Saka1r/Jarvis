@@ -1,6 +1,7 @@
 # core/jarvis.py
 import asyncio
 import logging
+import json
 from enum import Enum, auto
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional
@@ -14,7 +15,7 @@ from subsystems import audio_in
 from subsystems import audio_out
 from subsystems.vosk_stt import Vosk_STT
 from subsystems.coqui_tts import TTS_Manager
-from subsystems.llama_llm import LlamaLLM
+from subsystems.llm.factory import create_llm_provider
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class AgentState(Enum):
     WAIT = auto() # Ожидание wake-word для перехода в режим команд, то есть без реагирования
 
 class Jarvis:
-    def __init__(self):
+    def __init__(self, config_path: str = "config/system.json"):
         self.state = AgentState.COMMAND
         self._stop_event = asyncio.Event()
         self._tts_done_event = asyncio.Event()
@@ -36,18 +37,29 @@ class Jarvis:
         self.audio_out = audio_out.AudioOut()
         
         self.tts_manager = TTS_Manager()
-        self.llm = LlamaLLM()
+
+        self.config = self._load_config(config_path)
+        self.llm = create_llm_provider(self.config.get("llm", {}))
 
         self.context = ContextManager(max_turns=6) 
-
         self.commands_queue = asyncio.Queue(maxsize=10)
-
         self.reg: Optional[Registry] = None
 
+    def _load_config(self, config_path: str) -> dict:
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError:
+            logger.warning(f"Конфиг {config_path} не найден. Генерирую дефолтный...")
+            from config import Config
+            cfg = Config()
+            cfg.start() # Создаст файлы, если их нет
+            return cfg.standart_system
+    
     @classmethod
-    async def start(cls):
+    async def start(cls, config_path: str = "config/system.json"):
         """Точка входа. Вызывается через asyncio.run()"""
-        self = cls()
+        self = cls(config_path)
         try:
             self.vosk = Vosk_STT()
             self.audio = audio_in.AudioOpen()
