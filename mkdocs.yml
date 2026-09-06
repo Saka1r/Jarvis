@@ -13,26 +13,38 @@ theme:
       accent: red
       toggle:
         icon: material/brightness-4
-        name: Switch to light mode
+        name: Переключить на светлую тему
   font:
     text: Inter
     code: JetBrains Mono
   features:
-    - navigation.tabs
-    - navigation.sections
-    - navigation.top
-    - search.suggest
-    - content.code.copy
+    - navigation.instant          # Мгновенная загрузка страниц (без перезагрузки)
+    - navigation.instant.progress # Индикатор прогресса загрузки
+    - navigation.tabs             # Вкладки верхнего уровня
+    - navigation.tabs.sticky      # Закрепление вкладок при прокрутке
+    - navigation.sections         # Группировка в боковой панели
+    - navigation.indexes          # Позволяет сделать сам раздел кликабельным (страница index.md)
+    - navigation.top              # Кнопка "Наверх"
+    - search.suggest              # Подсказки при поиске
+    - search.highlight            # Подсветка найденного текста
+    - content.code.copy           # Кнопка копирования кода
+    - content.code.annotate       # 🔥 Аннотации в блоках кода (как в крутых доках)
+    - content.tabs.link           # Синхронизация вкладок на всей странице
 
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.superfences
   - pymdownx.inlinehilite
-  - admonition
-  - pymdownx.details
-  - attr_list
-  - md_in_html
+  - pymdownx.tabbed:              # 🔥 Современные вкладки внутри контента
+      alternate_style: true
+  - pymdownx.emoji:               # 🔥 Иконки прямо в тексте
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - admonition                    # Блоки внимания (note, warning, tip)
+  - pymdownx.details              # Сворачиваемые блоки внимания
+  - attr_list                     # Позволяет добавлять классы и стили к элементам
+  - md_in_html                    # Позволяет использовать Markdown внутри HTML-тегов
   - toc:
       permalink: true
 
