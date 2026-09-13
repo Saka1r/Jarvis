@@ -1,6 +1,6 @@
 {
   "llm": {
-    "provider": "llama_cpp",
+    "provider": "llama_server",
     "llama_cpp": {
       "model_path": "data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
       "n_ctx": 4096,

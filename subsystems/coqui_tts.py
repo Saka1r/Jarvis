@@ -60,7 +60,7 @@ class Coqui_TTS(TTS):
     """Обёртка над Coqui XTTS v2."""
     
     def __init__(self, 
-                 speaker_wav: str = "data/new_reference_jar_micro_22050.wav", 
+                 speaker_wav: str = "data/jarvis_reference.wav", 
                  device: Optional[str] = None):
         # Принудительно используем CUDA, если доступно 
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -98,11 +98,11 @@ class Coqui_TTS(TTS):
                 speaker_wav=self.processed_speaker_wav,
                 language="ru",
                 file_path=file_path,
-                temperature=0.8,
-                repetition_penalty=1.15,
+                temperature=0.6,
+                repetition_penalty=1.2,
                 top_k=50,
-                top_p=0.9,
-                speed=1.08,
+                top_p=0.85,
+                speed=1.05,
                 enable_text_splitting=True
             )
             logger.info(f"Generated: {file_path}")
