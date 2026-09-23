@@ -2,7 +2,7 @@
   "llm": {
     "provider": "llama_server",
     "llama_cpp": {
-      "model_path": "data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf",
+      "model_path": "data/models/Meta-t-Q6_KLlama-3.1-8B-Instruc.gguf",
       "n_ctx": 4096,
       "n_gpu_layers": -1,
       "n_threads": 8,
