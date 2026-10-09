@@ -37,7 +37,7 @@ class LlamaServerProvider(BaseLLM):
         """Для llama-server модель уже загружена в отдельном процессе."""
         print(f"✅ [LlamaServer] Using server at {self.server_url}")
         return True
-
+ 
     async def async_generate(self, context_messages: List[Dict]) -> str:
         session = await self._get_session()
         

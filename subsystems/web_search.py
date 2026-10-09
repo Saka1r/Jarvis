@@ -10,7 +10,7 @@ class WebParser():
         # This method should fetch and return the list of URLs that will be parsed
         pass
 
-    def parsing(self, target):
+    def parsing(self, target=None):
         # This method should parse the content of the target URL and return useful information
         pass
 

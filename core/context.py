@@ -55,11 +55,10 @@ class ContextManager:
         if self.short_term and self.short_term[-1]["role"] == role and self.short_term[-1]["content"] == content:
             return
 
-        # ЗАЩИТА 2: Если роль та же самая (например, два 'user' подряд), 
-        # мы ЗАМЕНЯЕМ последнее сообщение, а не добавляем новое. 
-        # Это сохраняет чередование user/assistant, которое требует Llama 3.
+        # ЗАЩИТА 2: Если роль та же самая (например, два 'user' подряд), мы ЗАМЕНЯЕМ последнее сообщение, а не добавляем новое. Это сохраняет чередование user/assistant, которое требует Llama 3.
         if self.short_term and self.short_term[-1]["role"] == role:
             logger.warning(f"⚠️ Обнаружено подряд идущее сообщение от {role}. Последнее сообщение обновлено.")
+            logger.warning(f"⚠️ Consecutive message detected from {role}. Last message updated.")
             self.short_term[-1]["content"] = content
         else:
             self.short_term.append({"role": role, "content": content})
