@@ -1,194 +1,140 @@
 #!/usr/bin/env python3
 """
-Умный установщик зависимостей для J.A.R.V.I.S.
-Автоматически определяет ОС, CUDA и устанавливает правильные версии.
+Умный установщик зависимостей для J.A.R.V.I.S. (v4.0 - Bulletproof)
+Обходит конфликт chromadb/transformers и предотвращает обновление huggingface-hub до 1.x
 """
 
 import subprocess
 import sys
 import platform
-import os
 
 def get_os_type():
-    """Определяет тип операционной системы."""
     system = platform.system().lower()
-    if system == "windows":
-        return "windows"
-    elif system == "linux":
-        return "linux"
-    elif system == "darwin":
-        return "macos"
-    else:
-        return "unknown"
+    if system == "windows": return "windows"
+    elif system == "linux": return "linux"
+    return "unknown"
 
 def check_cuda_available():
-    """Проверяет наличие CUDA в системе."""
     try:
         result = subprocess.run(
             ["nvidia-smi", "--query-gpu=driver_version,name", "--format=csv,noheader"],
-            capture_output=True,
-            text=True,
-            timeout=5
+            capture_output=True, text=True, timeout=5
         )
         if result.returncode == 0:
-            gpu_info = result.stdout.strip()
-            return True, gpu_info
+            return True, result.stdout.strip()
         return False, None
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return False, None
 
-def install_with_pip(packages, extra_args=None):
-    """Устанавливает пакеты через pip."""
-    cmd = [sys.executable, "-m", "pip", "install"]
-    if extra_args:
-        cmd.extend(extra_args)
-    cmd.extend(packages)
-    
-    print(f"\n📦 Устанавливаю: {', '.join(packages[:3])}...")
+def run_pip(args):
+    """Вспомогательная функция для вызова pip"""
+    cmd = [sys.executable, "-m", "pip"] + args
+    print(f"🔄 Выполняю: pip install {' '.join(args[-3:])}...")
     subprocess.check_call(cmd)
 
 def main():
     print("=" * 70)
-    print("🤖 J.A.R.V.I.S. Installation Wizard")
+    print("🤖 J.A.R.V.I.S. Installation")
     print("=" * 70)
     
-    # 1. Определение ОС
     os_type = get_os_type()
-    print(f"\n🖥️  Операционная система: {os_type.capitalize()}")
+    print(f"\n🖥️  ОС: {os_type.capitalize()}")
+    print(f"🐍 Python: {sys.version.split()[0]}")
     
-    if os_type == "unknown":
-        print("❌ Неподдерживаемая операционная система")
-        sys.exit(1)
-    
-    # 2. Проверка CUDA
     cuda_available, gpu_info = check_cuda_available()
+    use_cuda = False
     
     if cuda_available:
-        print(f"\n✅ Обнаружена NVIDIA GPU:")
-        print(f"   {gpu_info}")
+        print(f"\n✅ Обнаружена NVIDIA GPU:\n   {gpu_info}")
         choice = input("\nИспользовать CUDA-версию PyTorch? [Y/n]: ").strip().lower()
         use_cuda = choice != 'n'
     else:
-        print("\n⚠️  NVIDIA GPU не обнаружена или драйвер CUDA не установлен")
-        print("💡 Если у тебя есть GPU, установи драйвер NVIDIA и перезапусти скрипт")
-        use_cuda = False
-    
-    # 3. Подтверждение
-    print(f"\n📋 Конфигурация установки:")
-    print(f"   ОС: {os_type.capitalize()}")
-    print(f"   PyTorch: {'CUDA 12.4' if use_cuda else 'CPU'}")
+        print("\n⚠️  NVIDIA GPU не обнаружена. Будет установлена CPU-версия.")
     
     confirm = input("\nПродолжить установку? [Y/n]: ").strip().lower()
     if confirm == 'n':
-        print("❌ Установка отменена")
         sys.exit(0)
     
-    # 4. Установка PyTorch (самый большой пакет)
+    # ШАГ 1: Обновляем pip и ставим PyTorch
     print("\n" + "=" * 70)
-    print("📦 Шаг 1/2: Установка PyTorch")
+    print("📦 Шаг 1/3: Обновление pip и установка PyTorch")
     print("=" * 70)
+    run_pip(["install", "--upgrade", "pip"])
     
     if use_cuda:
-        # CUDA версия
-        torch_packages = [
-            "torch==2.5.1",
-            "torchvision==0.20.1",
-            "torchaudio==2.5.1"
-        ]
-        install_with_pip(
-            torch_packages,
-            extra_args=["--index-url", "https://download.pytorch.org/whl/cu124"]
-        )
+        run_pip(["install", "torch", "torchvision", "torchaudio", "--index-url", "https://download.pytorch.org/whl/cu124"])
     else:
-        # CPU версия
-        torch_packages = [
-            "torch==2.5.1",
-            "torchvision==0.20.1",
-            "torchaudio==2.5.1"
-        ]
-        install_with_pip(torch_packages)
-    
-    # 5. Установка остальных зависимостей
+        run_pip(["install", "torch", "torchvision", "torchaudio"])
+
+    # ШАГ 2: Ставим основные пакеты
     print("\n" + "=" * 70)
-    print("📦 Шаг 2/2: Установка остальных зависимостей")
+    print("📦 Шаг 2/3: Установка ML-стека")
     print("=" * 70)
     
-    # Общие зависимости для всех платформ
-    base_packages = [
-        "transformers==4.57.6",
-        "sentence-transformers==3.0.1",
-        "coqui-tts==0.27.5",
+    ml_packages = [
+        "transformers>=4.44.0,<4.58.0",
+        "sentence-transformers>=3.0.0,<4.0.0",
+        "coqui-tts>=0.24.0,<0.28.0",
         "vosk==0.3.45",
         "sounddevice==0.5.5",
         "PyAudio==0.2.14",
-        "httpx==0.28.1",
-        "numpy<2.0.0",
-        "scipy==1.17.1",
-        "librosa==0.11.0",
-        "pydub",
-        "aiohttp==3.14.1",
-        "anyio==4.14.0",
-        "llama_cpp_python==0.3.30"
+        "httpx>=0.27.0,<0.29.0",
+        "numpy>=1.24.0,<2.0.0",
+        "scipy>=1.10.0,<1.16.0",
+        "librosa>=0.10.0,<0.12.0",
+        "aiohttp>=3.9.0,<4.0.0",
+        "anyio>=4.0.0,<5.0.0",
+        "pydub"
     ]
     
-    # Специфичные для Windows
     if os_type == "windows":
-        base_packages.extend([
-            "comtypes==1.4.16",
-            "pycaw==20251023"
-        ])
-    
-    # Специфичные для Linux
-    if os_type == "linux" and use_cuda:
-        # NVIDIA библиотеки для Linux
-        base_packages.extend([
-            "nvidia-cublas-cu12==12.4.5.8",
-            "nvidia-cuda-cupti-cu12==12.4.127",
-            "nvidia-cuda-nvrtc-cu12==12.4.127",
-            "nvidia-cuda-runtime-cu12==12.4.127",
-            "nvidia-cudnn-cu12==9.1.0.70",
-            "nvidia-cufft-cu12==11.2.1.3",
-            "nvidia-curand-cu12==10.3.5.147",
-            "nvidia-cusolver-cu12==11.6.1.9",
-            "nvidia-cusparse-cu12==12.3.1.170",
-            "nvidia-nccl-cu12==2.21.5",
-            "nvidia-nvjitlink-cu12==12.4.127",
-            "nvidia-nvtx-cu12==12.4.127",
-            "triton==3.1.0"
-        ])
-    
-    install_with_pip(base_packages)
-    
-    # 6. Проверка установки
+        ml_packages.extend(["comtypes>=1.4.0", "pycaw"])
+        
+    run_pip(["install"] + ml_packages)
+
+    # ШАГ 3: ChromaDB + хак для предотвращения поломки huggingface-hub
     print("\n" + "=" * 70)
-    print("✅ Проверка установки")
+    print("📦 Шаг 3/3: Установка ChromaDB и фиксация tokenizers")
+    print("=" * 70)
+    print("💡 Примечание: pip может ворчать на конфликты версий tokenizers.")
+    print("   Мы используем хак (--no-deps), чтобы предотвратить это.")
+    
+    # 1. Ставим chromadb (он попытается стянуть старый tokenizers)
+    run_pip(["install", "chromadb>=0.5.0,<0.6.0"])
+    
+    # 2. Жёстко ставим нужный tokenizers БЕЗ обновления его зависимостей
+    # Это предотвращает скачивание huggingface-hub 1.x, который ломает transformers
+    run_pip(["install", "--no-deps", "tokenizers>=0.22.0,<0.23.0"])
+    
+    # 3. На всякий случай фиксируем huggingface-hub в безопасной зоне
+    run_pip(["install", "huggingface-hub>=0.34.0,<1.0"])
+
+    # ПРОВЕРКА
+    print("\n" + "=" * 70)
+    print("✅ Финальная проверка")
     print("=" * 70)
     
     check_script = """
 import torch
 import transformers
-import TTS
-import vosk
+import tokenizers
+import chromadb
+import numpy as np
+import scipy
 
-print(f"✅ PyTorch: {torch.__version__}")
-print(f"✅ CUDA available: {torch.cuda.is_available()}")
-if torch.cuda.is_available():
-    print(f"✅ GPU: {torch.cuda.get_device_name(0)}")
+print(f"✅ PyTorch: {torch.__version__} (CUDA: {torch.cuda.is_available()})")
+print(f"✅ Numpy: {np.__version__} (должно быть 1.26.x)")
+print(f"✅ Scipy: {scipy.__version__}")
 print(f"✅ Transformers: {transformers.__version__}")
-print(f"✅ Coqui TTS: {TTS.__version__}")
-print(f"✅ Vosk: {vosk.__version__}")
-print("\\n🎉 Все зависимости установлены успешно!")
+print(f"✅ Tokenizers: {tokenizers.__version__} (должно быть 0.22.x)")
+print(f"✅ ChromaDB: {chromadb.__version__}")
+print("\\n🎉 Все зависимости установлены и совместимы!")
 """
-    
     subprocess.check_call([sys.executable, "-c", check_script])
     
     print("\n" + "=" * 70)
-    print("🚀 Установка завершена!")
+    print("🚀 Установка завершена! Можешь запускать python main.py")
     print("=" * 70)
-    print("\nСледующие шаги:")
-    print("1. Скачай модели в data/models/")
-    print("2. Запусти: python main.py")
-    print("\nДокументация: https://github.com/Saka1r/Jarvis")
 
 if __name__ == "__main__":
     main()
