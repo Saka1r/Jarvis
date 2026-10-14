@@ -117,7 +117,7 @@ jarvis/
 
 ## ⚙️ Требования
 
-- Python 3.10+
+- Python 3.12+
 - CUDA (опционально, для ускорения TTS/LLM)
 - Микрофон и аудиовыход
 - ~8 ГБ VRAM для Llama-3.1-8B-Q6_K (или CPU — будет медленнее)
@@ -224,7 +224,7 @@ jarvis/
 
 
 ## ⚙️ Requirements
-Python 3.10+
+Python 3.12+
 CUDA (optional, for accelerating TTS/LLM)
 Microphone and audio output
 ~8 GB VRAM for Llama-3.1-8B-Q6_K (or CPU — slower)

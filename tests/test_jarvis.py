@@ -1,6 +1,6 @@
 # tests/test_jarvis.py
 import pytest
-import asyncio
+import json
 from unittest.mock import MagicMock, AsyncMock, patch
 from core.jarvis import Jarvis, AgentState
 
@@ -9,21 +9,42 @@ class TestJarvisFSM:
     """Тесты конечного автомата состояний."""
     
     @pytest.fixture
-    def jarvis(self):
-        """Создаем Джарвиса со всеми заглушками."""
-        j = Jarvis()
+    def jarvis(self, tmp_path):
+        """Создаем Джарвиса со всеми заглушками и безопасным конфигом."""
+        # Создаем фейковый конфиг, чтобы Jarvis не пытался генерировать реальный
+        config_file = tmp_path / "system.json"
+        config_file.write_text('{"llm": {"provider": "mock"}}', encoding="utf-8")
         
-        # Заменяем реальные подсистемы на заглушки
-        j.vosk = MagicMock()
-        j.audio_out = MagicMock()
-        j.reg = MagicMock()
-        j.llm = AsyncMock()
-        j.context = MagicMock()
-        
-        # Мок для LLM ответа
-        j.llm.async_generate.return_value = "<thought>думаю</thought><response>Ответ</response>"
-        
-        return j
+        # Патчим создание тяжелых объектов внутри __init__
+        with patch('core.jarvis.create_llm_provider') as mock_llm_factory, \
+             patch('core.jarvis.TTS_Manager') as mock_tts_cls, \
+             patch('core.jarvis.Vosk_STT') as mock_vosk_cls, \
+             patch('core.jarvis.audio_in.AudioOpen') as mock_audio_in_cls, \
+             patch('core.jarvis.audio_out.AudioOut') as mock_audio_out_cls:
+            
+            # Настраиваем возврат моков
+            mock_llm = MagicMock()
+            mock_llm.async_generate = AsyncMock(return_value="<thought>думаю</thought><response>Ответ</response>")
+            mock_llm_factory.return_value = mock_llm
+            
+            mock_tts = MagicMock()
+            mock_tts.queue = MagicMock()
+            mock_tts.queue.put_nowait = MagicMock()
+            mock_tts.queue.join = AsyncMock()
+            mock_tts_cls.return_value = mock_tts
+            
+            # Создаем экземпляр (он использует наши моки благодаря patch)
+            j = Jarvis(config_path=str(config_file))
+            
+            # Явно подменяем зависимости для чистоты тестов FSM
+            j.vosk = MagicMock()
+            j.audio_out = MagicMock()
+            j.reg = MagicMock()
+            j.llm = mock_llm
+            j.context = MagicMock()
+            j.context.get_messages_for_llm.return_value = [{"role": "user", "content": "hi"}]
+            
+            return j
     
     @pytest.mark.asyncio
     async def test_command_mode_to_dialog_mode(self, jarvis):
@@ -60,9 +81,6 @@ class TestJarvisFSM:
     async def test_free_mode_calls_llm(self, jarvis):
         """В режиме FREE должна вызываться LLM."""
         jarvis.state = AgentState.FREE
-        jarvis.context.get_messages_for_llm.return_value = [
-            {"role": "user", "content": "hi"}
-        ]
         
         await jarvis.handle_input("привет")
         
