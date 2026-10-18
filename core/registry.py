@@ -1,9 +1,9 @@
 # core/registry.py
 
+import importlib
 import json
 import os
 import sys
-import importlib
 import zipfile
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -11,8 +11,8 @@ sys.path.insert(0, project_root)
 
 class Registry:
     def __init__(self, systems=None):
-        self.systems = systems or {} 
-        self._plugin_cache = {} 
+        self.systems = systems or {}
+        self._plugin_cache = {}
 
         self.plugins = None
         self.utility_plug = None
@@ -29,7 +29,7 @@ class Registry:
         """
         text_lower = text.lower()
         plugins_dir = "plugins"
-        
+
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
@@ -40,14 +40,14 @@ class Registry:
                         for command in plugin_commands.get("commands", []):
                             if text_lower in command.get('triggers', []):
                                 return command.get('priority', 'dialog')
-        
+
         # Команда не найдена в реестре → считаем диалоговой
         return 'dialog'
 
     def load_commands(self):
-        commands = [] 
+        commands = []
         plugins_dir = "plugins"
-        
+
         for plugin_name in os.listdir(plugins_dir):
             plugin_path = os.path.join(plugins_dir, plugin_name)
             if os.path.isdir(plugin_path):
@@ -57,7 +57,7 @@ class Registry:
                         plugin_commands = json.load(f)
                         for command in plugin_commands.get("commands", []):
                             commands.extend(command.get('triggers', []))
-        
+
         return set(commands)
 
     def is_command(self, text):
@@ -127,12 +127,12 @@ class Registry:
 
                     plugin_module = importlib.import_module(f"plugins.{plugin_name}.main")
                     plugin_class = getattr(plugin_module, file_plug["entry"])
-                    
+
                     self._plugin_cache[plugin_name] = {
                         "instance": plugin_class(self.systems),
                         "config": file_config
                     }
-                
+
                 cached = self._plugin_cache[plugin_name]
                 plugin_instance = cached["instance"]
                 file_config = cached["config"]

@@ -46,23 +46,26 @@ class ContextManager:
             logger.error(f"Ошибка сохранения контекста: {e}")
 
     def add_message(self, role: str, content: str):
-        if not content.strip():
+        if not content or not content.strip():
             return
             
         content = content.strip()
 
-        # ЗАЩИТА 1: Игнорируем точные дубликаты подряд (частая проблема STT)
-        if self.short_term and self.short_term[-1]["role"] == role and self.short_term[-1]["content"] == content:
-            return
+        # не добавляем точный дубль подряд - например если STT 
+        # повторно выдал ту же реплику
 
-        # ЗАЩИТА 2: Если роль та же самая (например, два 'user' подряд), мы ЗАМЕНЯЕМ последнее сообщение, а не добавляем новое. Это сохраняет чередование user/assistant, которое требует Llama 3.
-        if self.short_term and self.short_term[-1]["role"] == role:
-            logger.warning(f"⚠️ Обнаружено подряд идущее сообщение от {role}. Последнее сообщение обновлено.")
-            logger.warning(f"⚠️ Consecutive message detected from {role}. Last message updated.")
-            self.short_term[-1]["content"] = content
-        else:
-            self.short_term.append({"role": role, "content": content})
-            
+        if (
+                self.short_term
+                and self.short_term[-1]["role"] == role
+                and self.short_term[-1]["content"] == content
+        ):
+            return
+        
+        self.short_term.append({
+                "role": role,
+                "content": content,
+        })
+
         self._save()
 
     def add_tool_result(self, tool_name: str, query: str, result: str):
