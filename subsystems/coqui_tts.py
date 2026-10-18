@@ -19,16 +19,18 @@ logger = logging.getLogger(__name__)
 
 class TTS_Manager:
     def __init__(self, audio_out=None):
-        self.tts = Coqui_TTS()  # Ваш класс TTS
+        self.tts = Coqui_TTS()
         self.queue = queue.Queue(maxsize=50)
         self.audio_out = audio_out or AudioOut()
         self._thread = None
         self._stop_event = threading.Event()
+        self._tts_done_event = threading.Event()
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive(): return
         self.tts.open()
         self._stop_event.clear()
+        self._tts_done_event.set() 
         self._thread = threading.Thread(target=self._worker, daemon=True, name="TTS-Worker")
         self._thread.start()
 
@@ -39,22 +41,30 @@ class TTS_Manager:
                 text = self.queue.get(timeout=0.5)
             except queue.Empty:
                 continue
-            if text is None: break
+            if text is None: 
+                self.queue.task_done()
+                break
 
             try:
+                self._tts_done_event.clear()
+
                 file_path = self.tts.generate(text)
                 if file_path and Path(file_path).exists():
-                    self.audio_out.play(file_path)  # sd.wait() блокирует ЗДЕСЬ
+                    self.audio_out.play_file_sync(file_path)  # sd.wait() блокирует ЗДЕСЬ
             except Exception as e:
                 logger.error(f"TTS error: {e}")
             finally:
                 self.tts.cleanup(file_path)
                 self.queue.task_done()  # ← Сигнализирует queue.join(), что задача завершена
+                self._tts_done_event.set()
 
     def stop(self) -> None:
         self._stop_event.set()
         self.queue.put(None)
-        if self._thread: self._thread.join(timeout=5.0)
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=5.0)
+
+        self._tts_done_event.set()
         
 class Coqui_TTS(TTS):
     """Обёртка над Coqui XTTS v2."""

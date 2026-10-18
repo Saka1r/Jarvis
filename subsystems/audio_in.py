@@ -52,18 +52,21 @@ class AudioOpen:
             n = num_frames or self.frames_per_buffer
             return self.stream.read(n, exception_on_overflow=False)
 
-    def close(self):
+    def close(self) -> None:
         """Закрывает поток"""
-        with self._lock:
-            if self.stream is not None:
-                try:
+        logger.info("Закрытие аудиовыхода...")
+        try:
+            if self.stream:
+                if self.stream.is_active():
                     self.stream.stop_stream()
-                    self.stream.close()
+                self.stream.close()
+                self.stream = None
 
-                except Exception:
-                    logger.exception(
-                        "Error: subsystem/audio_in.py [close] -> Failed to close audio stream"
-                    )
+            if self._pyaudio:
+                self._pyaudio.terminate()
+                self._pyaudio = None
 
-                finally:
-                    self.stream = None
+            self.is_streaming = False
+            logger.info("Аудиовыход освобожден")
+        except Exception as e:
+            logger.error("Ошибка при закрытие потока: {e}")

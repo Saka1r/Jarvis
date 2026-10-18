@@ -138,14 +138,14 @@ class Jarvis:
                 self.state = AgentState.FREE
                 self.vosk.clear_grammar()
                 logger.info("🔓 Режим диалога активирован")
-                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
+                await asyncio.to_thread(self.audio_out.play, "data/jarvis_wav/yes_sir.wav")
                 return
             
             if "режим ожидания" in text_lower:
                 self.state = AgentState.WAIT
                 self.vosk.clear_grammar()
                 logger.info("🔓 Режим ожидания активирован")
-                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
+                await asyncio.to_thread(self.audio_out.play, "data/jarvis_wav/yes_sir.wav")
                 return
 
             if self.reg.is_command(text):
@@ -159,7 +159,7 @@ class Jarvis:
                 self.state = AgentState.COMMAND
                 self.vosk.set_grammar()
                 logger.info("🔓 Режим команд активирован")
-                self.audio_out.play("data/jarvis_wav/yes_sir.wav")
+                await asyncio.to_thread(self.audio_out.play, "data/jarvis_wav/yes_sir.wav")
                 return
 
         # ____________________ РЕЖИМ LLM ____________________
