@@ -26,7 +26,10 @@ class Config:
                     "url": "http://127.0.0.1:8080",
                     "max_tokens": 256,
                     "temperature": 0.1,
-                    "timeout": 60
+                    "timeout": 60,
+                    "tool_mode": "native" # "native" — нативны й OpenAI tool calling (требуется запуск llama-server с флагом --jinja)
+                                          # "json" — резервный строгий JSON-протокол (работает без --jinja)
+                                          # "off" — tool calling выключен, поведение полностью прежнее
                 }
             },
             "tts": {

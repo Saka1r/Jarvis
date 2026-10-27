@@ -5,6 +5,13 @@ import json
 import os
 import sys
 import zipfile
+import logging
+
+from typing import Any, Dict, List
+
+from core.tools import ToolRegistry, register_builtin_tools
+
+logger = logging.getLogger(__name__)
 
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
@@ -21,6 +28,9 @@ class Registry:
 
         self.check_plugins()
         self.commands = self.load_commands()
+
+        self.tools = ToolRegistry()
+        register_builtin_tools(self.tools)
 
     def get_command_priority(self, text: str) -> str:
         """
@@ -73,7 +83,7 @@ class Registry:
             path = "plugins/" + i.get("name")
 
             if not os.path.exists(path):
-                print(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found")
+                logger.error(f"Error: core/registry.py [check_plugins] -> Plugin {path} not found")
 
         # TODO добавить еще для utility
 
@@ -87,22 +97,22 @@ class Registry:
         self.plugins = self.get_plugins_list()
 
         if not os.path.exists(path_to_zip):
-            print("Error: core/registry.py [plug_install] -> path not found")
+            logger.error("Error: core/registry.py [plug_install] -> path not found")
         else:
             try:
                 extract_to_dir = path_to_zip.split("/")[-1].replace(".zip", "")
                 extract_to_dir = "plugins/" + extract_to_dir
-                print(extract_to_dir)
+                logger.log(extract_to_dir)
 
                 with zipfile.ZipFile(path_to_zip, "r") as zip_ref:
                     bad_file = zip_ref.testzip()
                     if bad_file:
-                        print("Error: core/registry.py [plug_install] -> The file is damaged")
+                        logger.error("Error: core/registry.py [plug_install] -> The file is damaged")
                     else:
                         zip_ref.extractall(extract_to_dir)
-                        print("core/registry.py [plug_install] -> plugins installed")
+                        logger.log("core/registry.py [plug_install] -> plugins installed")
             except zipfile.BadZipFile:
-                print(
+                logger.error(
                     "Error: core/registry.py [plug_install] -> File is not a zip archive or is heavily corrupted."
                 )
 
@@ -143,14 +153,14 @@ class Registry:
                         if hasattr(plugin_instance, action):
                             getattr(plugin_instance, action)()
                         else:
-                            print(f"Error: Action {action} not found in {plugin_name}")
+                            logger.error(f"Error: Action {action} not found in {plugin_name}")
         except Exception as e:
-            print("Error: core/registry.py [voice_plug_start] -> ", e)
+            logger.error("Error: core/registry.py [voice_plug_start] -> ", e)
 
     def plug_start(self, flag, voice_text="None"):
         if flag == "voice":
             if voice_text == "None":
-                print(
+                logger.error(
                     "Error: core/registry.py [plug_install] -> voice_text for voice commands: None"
                 )
             else:
@@ -158,6 +168,25 @@ class Registry:
         elif flag == "utility":
             pass
 
+   # ------------------------------------------------------------------
+    # Tool Calling API (делегирование в ToolRegistry)
+    #
+    # Существует отдельно от voice_plug_start(): голосовые команды
+    # продолжают работать по точному совпадению триггера.
+    # ------------------------------------------------------------------
+    def get_tools_schema(self) -> List[Dict[str, Any]]:
+        """Схемы инструментов, которые разрешено вызывать модели."""
+        return self.tools.get_schemas()
+
+    def is_tool_allowed(self, name: str) -> bool:
+        return self.tools.is_allowed(name)
+
+    async def execute_tool(self, name: str, arguments: Any) -> Dict[str, Any]:
+        """
+        Выполняет разрешённый инструмент с валидацией аргументов.
+        Возвращает {"ok": bool, "tool": str, "result"|"error": ...}
+        """
+        return await self.tools.execute(name, arguments)
 
 if __name__ == "__main__":
     start = Registry()

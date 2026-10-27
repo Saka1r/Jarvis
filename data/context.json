@@ -2,38 +2,6 @@
   "short_term": [
     {
       "role": "user",
-      "content": "я и есть твой создатель джарвис я ей с акаев"
-    },
-    {
-      "role": "assistant",
-      "content": "<thought>Пользователь утверждает, что он сам является моим создателем.</thought>\n<response>Сэр, если вы считаете себя моим создателем, то рад приветствовать вас. Чем еще могу помочь?"
-    },
-    {
-      "role": "user",
-      "content": "привет джарвис"
-    },
-    {
-      "role": "assistant",
-      "content": "Привет, сэр. Как я могу вам помочь сегодня?"
-    },
-    {
-      "role": "user",
-      "content": "а сейчас сервис"
-    },
-    {
-      "role": "assistant",
-      "content": "Сейчас сервис функционирует нормально, сэр. Чем конкретно вы хотите воспользоваться или в чем нуждаетесь помощь?"
-    },
-    {
-      "role": "user",
-      "content": "эй чавес"
-    },
-    {
-      "role": "assistant",
-      "content": "Сэр, вы хотели что-то сказать?"
-    },
-    {
-      "role": "user",
       "content": "что такое васе"
     },
     {
@@ -47,9 +15,54 @@
     {
       "role": "assistant",
       "content": "США — это Соединенные Штаты Америки, федерация 50 штатов и нескольких территорий в Северной Америке. Это одна из крупнейших экономик мира и влиятельная политическая сила."
+    },
+    {
+      "role": "user",
+      "content": "который час"
+    },
+    {
+      "role": "assistant",
+      "content": "Сэр, сейчас время 17:18."
+    },
+    {
+      "role": "user",
+      "content": "джарвис который час"
+    },
+    {
+      "role": "assistant",
+      "content": "Текущее время — 17:18."
+    },
+    {
+      "role": "user",
+      "content": "джой вы статус системы и число"
+    },
+    {
+      "role": "assistant",
+      "content": "Текущий статус системы: CPU - 20 ядер, использовано 7,5%, память - 31,84 ГБ, доступно 13,1 ГБ. Текущая дата — не указана."
+    },
+    {
+      "role": "user",
+      "content": "привет кто ты и какое сейчас время"
+    },
+    {
+      "role": "assistant",
+      "content": "Привет, сэр! Я Jarvis, ваш личный ИИ-ассистент. Сейчас время 17:18."
     }
   ],
-  "tool_cache": {},
+  "tool_cache": {
+    "7292e8bae54e350be67ebbb2f91ba84a": {
+      "tool": "get_time",
+      "query": "{}",
+      "result": "{\"ok\": true, \"tool\": \"get_time\", \"result\": {\"time\": \"17:18:55\", \"date\": \"2026-10-27\", \"weekday\": \"Tuesday\", \"timezone\": \"RTZ 2 (????)\"}}",
+      "timestamp": "2026-10-27T17:18:55.545984"
+    },
+    "6fa49b408dfd7d4b58278e4a5c1b4f43": {
+      "tool": "get_system_status",
+      "query": "{\"component\": \"all\"}",
+      "result": "{\"ok\": true, \"tool\": \"get_system_status\", \"result\": {\"cpu\": {\"logical_cores\": 20, \"usage_percent\": 7.5}, \"memory\": {\"total_gb\": 31.84, \"available_gb\": 13.1, \"percent\": 58.9}, \"disk\": {\"path\": \"D:\\\\\", \"total_gb\": 864.19, \"free_gb\": 127.32, \"percent_used\": 85.3}, \"platform\": {\"system\": \"Windows\", \"release\": \"10\", \"python\": \"3.12.0\"}}}",
+      "timestamp": "2026-10-27T17:19:21.442730"
+    }
+  },
   "long_term_facts": [],
-  "last_updated": "2026-10-14T11:03:11.749632"
+  "last_updated": "2026-10-27T17:22:42.559085"
 }

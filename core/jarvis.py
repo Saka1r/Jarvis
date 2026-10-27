@@ -19,6 +19,10 @@ from subsystems.llm.factory import create_llm_provider
 
 logger = logging.getLogger(__name__)
 
+# пока что константы на уровни ядра TODO: добавить их в конфиг
+MAX_TOOL_ROUNDS = 2      # максимум последовательных вызовов инструментов на один запрос
+MAX_TOOLS_PER_ROUND = 2  # максимум инструментов в одном ответе модели
+
 class AgentState(Enum):
     COMMAND = auto()  # Ожидание wake-word или команды плагина
     FREE = auto()     # Диалог с LLM
@@ -70,6 +74,10 @@ class Jarvis:
                 "vosk": self.vosk,
                 "audio_in": self.audio
             })
+
+        # Передаём описание инструментов в LLM-провайдер (нужно для json-режима)
+            if hasattr(self.llm, "set_tools_description"):
+                self.llm.set_tools_description(self.reg.tools.describe_for_prompt())
 
             self.vosk.open()
             self.audio.open()
@@ -166,41 +174,111 @@ class Jarvis:
         elif self.state == AgentState.FREE:
             logger.info(f"🤔 Думаю над фразой: {text}")
             self.state = AgentState.SPEAKING
-            
+
             self.context.add_message("user", text)
-            
+
             try:
                 messages_for_llm = self.context.get_messages_for_llm()
-                raw_response = await self.llm.async_generate(context_messages=messages_for_llm)
-                
-                thought = ""
-                speech = ""
-                
-                if "<thought>" in raw_response and "</thought>" in raw_response:
-                    thought = raw_response.split("<thought>")[1].split("</thought>")[0].strip()
-                
-                if "<response>" in raw_response and "</response>" in raw_response:
-                    speech = raw_response.split("<response>")[1].split("</response>")[0].strip()
-                else:
-                    speech = raw_response.strip()
+                speech = await self._dialog_turn(messages_for_llm)
 
-                if thought:
-                    logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
-                
                 if speech and speech.strip():
                     logger.info(f"💬 ДЖАРВИС ГОВОРИТ: {speech}")
                     self.context.add_message("assistant", speech)
                     await self._speak_and_wait(speech)
+                else:
+                    logger.warning("LLM вернула пустой ответ")
+                    await self._speak_and_wait("Я не расслышал, сэр. Повторите, пожалуйста.")
             except Exception as e:
-                logger.error(f"LLM/TTS pipeline failed: {e}")
-                try:
-                    self.tts_manager.queue.put_nowait("Произошла ошибка, сэр. Повторите команду.")
-                    await self._tts_done_event.wait()
-                except Exception as tts_error:
-                    logger.error(f"TTS queue error: {tts_error}")
+                logger.error(f"LLM/TTS pipeline failed: {e}", exc_info=True)
+                await self._speak_and_wait("Произошла ошибка, сэр. Повторите команду.")
             finally:
                 self.state = AgentState.COMMAND
                 logger.info("🔒 Режим диалога завершён")
+
+
+    @staticmethod
+    def _parse_llm_text(raw_response: str) -> tuple:
+        """
+        Разделяет <thought> и <response>.
+        Логика сохранена из прежней версии + защита от утечки тегов в TTS.
+        """
+        raw = raw_response or ""
+        thought = ""
+        speech = ""
+
+        if "<thought>" in raw and "</thought>" in raw:
+            thought = raw.split("<thought>")[1].split("</thought>")[0].strip()
+
+        if "<response>" in raw and "</response>" in raw:
+            speech = raw.split("<response>")[1].split("</response>")[0].strip()
+        else:
+            # P1-2 fix: не отправляем в TTS сырой текст с тегами
+            body = raw
+            if "</thought>" in body:
+                body = body.split("</thought>", 1)[1]
+            speech = body.strip()
+
+        return thought, speech
+
+    async def _dialog_turn(self, messages_for_llm: list) -> str:
+        """
+        Один ход диалога с ограниченным циклом Tool Calling.
+
+        Возвращает ТОЛЬКО финальный текст для озвучивания.
+        Промежуточные JSON, tool_call_id и traceback наружу не попадают.
+
+        Сообщения протокола tool calling живут только в локальном списке
+        и НЕ записываются в персистентный ContextManager.short_term,
+        чтобы усечение deque не могло оставить незавершённый tool call.
+        """
+        messages = list(messages_for_llm)
+        tools_schema = self.reg.get_tools_schema() if self.reg else []
+
+        for round_index in range(MAX_TOOL_ROUNDS):
+            response = await self.llm.async_generate_with_tools(messages, tools_schema)
+
+            # --- обычный текстовый ответ: завершаем ---
+            if not response.wants_tool:
+                thought, speech = self._parse_llm_text(response.text)
+                if thought:
+                    logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
+                return speech
+
+            # --- модель запросила инструменты ---
+            messages.append(response.as_assistant_message())
+
+            for call in response.tool_calls[:MAX_TOOLS_PER_ROUND]:
+                logger.info(f"🛠️ LLM вызывает: {call.name} args={call.arguments}")
+
+                result = await self.reg.execute_tool(call.name, call.arguments)
+
+                payload = json.dumps(result, ensure_ascii=False, default=str)
+                messages.append({
+                    "role": "tool",
+                    "tool_call_id": call.id,
+                    "name": call.name,
+                    "content": payload[:4000],
+                })
+
+                # долгосрочное кэширование — через уже существующий метод контекста
+                try:
+                    self.context.add_tool_result(
+                        call.name,
+                        json.dumps(call.arguments, ensure_ascii=False, default=str),
+                        payload,
+                    )
+                except Exception as e:
+                    logger.warning(f"Не удалось закэшировать результат инструмента: {e}")
+
+            logger.info(f"🔁 Tool round {round_index + 1}/{MAX_TOOL_ROUNDS} завершён")
+
+        # --- лимит исчерпан: финальный запрос БЕЗ инструментов ---
+        logger.warning("Лимит вызовов инструментов исчерпан — запрашиваю текстовый ответ")
+        final_text = await self.llm.async_generate(messages)
+        thought, speech = self._parse_llm_text(final_text)
+        if thought:
+            logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
+        return speech or "Мне не удалось завершить запрос, сэр."
 
     async def _speak_and_wait(self, text: str):
         """Асинхронно ждет завершения синтеза и воспроизведения."""

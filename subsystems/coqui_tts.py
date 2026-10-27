@@ -50,7 +50,7 @@ class TTS_Manager:
 
                 file_path = self.tts.generate(text)
                 if file_path and Path(file_path).exists():
-                    self.audio_out.play_file_sync(file_path)  # sd.wait() блокирует ЗДЕСЬ
+                    self.audio_out.play(file_path)  # sd.wait() блокирует ЗДЕСЬ
             except Exception as e:
                 logger.error(f"TTS error: {e}")
             finally:

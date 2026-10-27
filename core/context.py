@@ -9,6 +9,8 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+_ALLOWED_HISTORY_ROLES = {"system", "user", "assistant"}
+
 class ContextManager:
     def __init__(self, storage_path: str = "data/context.json", max_turns: int = 6):
         self.storage_path = storage_path
@@ -46,26 +48,28 @@ class ContextManager:
             logger.error(f"Ошибка сохранения контекста: {e}")
 
     def add_message(self, role: str, content: str):
+        # 1. Защита: служебные сообщения tool calling не попадают в историю
+        if role not in _ALLOWED_HISTORY_ROLES:
+            logger.warning(f"add_message: роль '{role}' не допускается в истории — пропущено")
+            return
+
         if not content or not content.strip():
             return
             
         content = content.strip()
 
-        # не добавляем точный дубль подряд - например если STT 
-        # повторно выдал ту же реплику
-
         if (
-                self.short_term
-                and self.short_term[-1]["role"] == role
-                and self.short_term[-1]["content"] == content
+            self.short_term
+            and self.short_term[-1]["role"] == role
+            and self.short_term[-1]["content"] == content
         ):
             return
         
+        # 3. Добавляем сообщение
         self.short_term.append({
-                "role": role,
-                "content": content,
+            "role": role,
+            "content": content,
         })
-
         self._save()
 
     def add_tool_result(self, tool_name: str, query: str, result: str):
