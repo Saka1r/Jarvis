@@ -28,11 +28,18 @@
       "model_path": "data/models/piper/ru-RU-irina-medium.onnx"
     }
   },
-  "stt": {
-    "provider": "vosk",
+    "stt": {
+    "command_provider": "vosk",
+    "dialog_provider": "whisper",
     "vosk": {
-      "model_path": "data/models/vosk-model-small-ru-0.22",
+      "model_path": "data/models/vosk",
       "sample_rate": 16000
+    },
+    "whisper": {
+      "model_size": "small", 
+      "device": "cuda",
+      "compute_type": "float16",
+	  "min_buffer_duration": 3.0
     }
   }
 }

@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict, List
 
 from core.tools import ToolRegistry, register_builtin_tools
+from core.services import ServiceContainer
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,9 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, project_root)
 
 class Registry:
-    def __init__(self, systems=None):
-        self.systems = systems or {}
+    def __init__(self, services: ServiceContainer = None):
+        self.services = services or ServiceContainer()
+
         self._plugin_cache = {}
 
         self.plugins = None
@@ -125,6 +127,8 @@ class Registry:
     def voice_plug_start(self, voice_text):
         try:
             self.voice_plug = self.get_plugins_list().get("voice")
+            command_found = False
+            
             for i in self.voice_plug:
                 plugin_name = i.get("name")
                 path = f"plugins/{plugin_name}"
@@ -137,12 +141,18 @@ class Registry:
 
                     plugin_module = importlib.import_module(f"plugins.{plugin_name}.main")
                     plugin_class = getattr(plugin_module, file_plug["entry"])
-
+                    
+                    # ✅ ИСПРАВЛЕНО: используем self.services вместо self.systems
+                    plugin_instance = plugin_class(self.services)
+                    
+                    if hasattr(plugin_instance, 'load_commands'):
+                        plugin_instance.load_commands(file_config)
+                    
                     self._plugin_cache[plugin_name] = {
-                        "instance": plugin_class(self.systems),
+                        "instance": plugin_instance,
                         "config": file_config
                     }
-
+                
                 cached = self._plugin_cache[plugin_name]
                 plugin_instance = cached["instance"]
                 file_config = cached["config"]
@@ -152,10 +162,30 @@ class Registry:
                         action = command.get("action")
                         if hasattr(plugin_instance, action):
                             getattr(plugin_instance, action)()
-                        else:
-                            logger.error(f"Error: Action {action} not found in {plugin_name}")
+                            command_found = True
+                            logger.info(f"✅ Команда выполнена (точное совпадение): {action}")
+                            break
+                
+                if command_found:
+                    break
+            
+            if not command_found:
+                logger.info(f"⚠️ Точная команда не найдена: '{voice_text}'. Пробую нечёткий поиск...")
+                
+                for plugin_name, cached in self._plugin_cache.items():
+                    plugin_instance = cached["instance"]
+                    
+                    if hasattr(plugin_instance, 'execute') and plugin_instance.execute(voice_text):
+                        logger.info(f"✅ Команда выполнена через нечёткий поиск в {plugin_name}")
+                        command_found = True
+                        break
+                
+                if not command_found:
+                    logger.warning(f"❌ Команда не найдена ни в одном плагине: '{voice_text}'")
+                    
         except Exception as e:
-            logger.error("Error: core/registry.py [voice_plug_start] -> ", e)
+            # ✅ ИСПРАВЛЕНО: правильный формат логирования
+            logger.error(f"Error: core/registry.py [voice_plug_start] -> {e}", exc_info=True)
 
     def plug_start(self, flag, voice_text="None"):
         if flag == "voice":

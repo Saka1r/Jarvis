@@ -1,10 +1,76 @@
-__pychache__/
-core/__pychache__/
-subsystem/__pychache__/
-.pylintrc
-/data/models/llama-7b-chat.gguf
-data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf
-jarvis2.0_start.lnk
+# Python
+__pycache__/
 *.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+*.whl
+
+# Виртуальное окружение
 .venv/
-data/contex.json
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Тесты и линтеры
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Логи
+*.log
+logs/
+
+# Конфиги пользователя (не коммитим)
+jarvis2.0_start.lnk
+
+# ============ ДАННЫЕ (всё, что генерируется/загружается) ============
+
+# Модели ML (большие файлы, не должны быть в Git)
+/data/models/*.gguf
+/data/models/llama-7b-chat.gguf
+/data/models/Meta-Llama-3.1-8B-Instruct-Q6_K.gguf
+/data/Qwen2.5-7B-Instruct.Q5_K_M.gguf
+/data/models/whisper/
+data/whisper/
+/data/silero_vad/
+/data/models/silero_vad/
+
+# Временные файлы TTS
+/data/output_wav/
+
+# Контекст и память пользователя
+/data/context.json
+/data/contex.json
+/data/context.json.bak
+
+# ChromaDB и векторные индексы
+/data/knowledge_db/
+/data/chroma_db/
+/data/vector_index/
+
+# Загруженные документы и Jarvispedia
+/data/raw_documents/
+/data/jarvispedia/
+/data/documents/
+
+# Базы данных
+*.db
+*.sqlite
+*.sqlite3
+/data/metadata.db
+/data/metadata.sqlite
+
+# Плагины пользователя (если генерируются/скачиваются)
+# /data/plugins.json
