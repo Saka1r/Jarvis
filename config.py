@@ -1,9 +1,23 @@
 # config.py
 import json
 import os
+import logging
+
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+CONFIG_DIR = Path("config")
+DATA_DIR = Path("data")
+PLUGINS_DIR = Path("plugins")
 
 class Config:
     def __init__(self):
+
+        self.system_config_path = CONFIG_DIR / "system.json"
+        self.setting_path = DATA_DIR / "setting.json"
+        self.list_plugins = DATA_DIR / "plugins.json"
+
         self.standart_plugins = {
             "voice": [{"name": "jarvis", "version": "1.0", "enabled": True}],
             "utility": [],
@@ -53,30 +67,30 @@ class Config:
         }
 
     def generate_system_config(self):
-        with open("config/system.json", "w", encoding="utf-8") as f:
+        with open(self.system_config_path, "w", encoding="utf-8") as f:
             json.dump(self.standart_system, f, indent=4, ensure_ascii=False)
 
     def generate_setting_config(self):
-        with open("data/setting.json", "w", encoding="utf-8") as f:
+        with open(self.system_config_path, "w", encoding="utf-8") as f:
             json.dump(self.standart_setting, f, indent=4, ensure_ascii=False)
 
     def generate_plugins_config(self):
-        with open("data/plugins.json", "w", encoding="utf-8") as f:
+        with open(self.list_plugins, "w", encoding="utf-8") as f:
             json.dump(self.standart_plugins, f, indent=4, ensure_ascii=False)
 
     def check_status(self):
         """проверяет файлы конфигурации, системы, плагинов"""
 
-        if not os.path.exists("config/system.json"):
-            print("Error: config/system.json not found -> create config/system.json")
+        if not os.path.exists(self.system_config_path):
+            logger.warning("config/system.json not found -> create config/system.json")
             self.generate_system_config()
 
-        if not os.path.exists("data/setting.json"):
-            print("Error: data/setting.json not found -> create data/setting.json")
+        if not os.path.exists(self.setting_path):
+            logger.warning("data/setting.json not found -> create data/setting.json")
             self.generate_setting_config()
 
-        if not os.path.exists("data/plugins.json"):
-            print("Error: data/plugins.json not found -> create plugins.json")
+        if not os.path.exists(self.list_plugins):
+            logger.warning("data/plugins.json not found -> create plugins.json")
             self.generate_plugins_config()
 
     def start(self):
