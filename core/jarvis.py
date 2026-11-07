@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import json
+import time
 from enum import Enum, auto
 from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, List, Dict, Any
@@ -9,6 +10,7 @@ from typing import Optional, List, Dict, Any
 from core.registry import Registry
 from core.context import ContextManager
 from core.services import ServiceContainer
+from core.llm_wrapper import LLMWrapper, CircuitBreakerConfig
 from subsystems.stt.factory import create_stt_provider  # <-- ВАЖНО: добавлен импорт
 from subsystems import audio_in
 from subsystems import audio_out
@@ -20,6 +22,7 @@ logger = logging.getLogger(__name__)
 # Константы для Tool Calling
 MAX_TOOL_ROUNDS = 2
 MAX_TOOLS_PER_ROUND = 2
+LLM_TIMEOUT_SECONDS = 30
 
 class AgentState(Enum):
     COMMAND = auto()  # Ожидание wake-word или команды плагина (Vosk + grammar)
@@ -35,11 +38,24 @@ class Jarvis:
         
         self.config = self._load_config(config_path)
         
-        # 1. Инициализация LLM и TTS
-        self.llm = create_llm_provider(self.config.get("llm", {}))
+        self.context = ContextManager(
+                storage_path="data/context.json",
+                max_turns=6,
+                max_facts=100
+        )
+        raw_llm = create_llm_provider(self.config.get("llm", {}))
+        self.llm = LLMWrapper(
+                llm_instance=raw_llm,
+                timeout=30,
+                fallback_message="Прошу прощения сэр. Не могу подключиться к модели.",
+                circuit_breaker_config=CircuitBreakerConfig(
+                    failure_threshold=5,
+                    recovery_timeout=60,
+                    success_threshold=2
+                )
+        )
         self.tts_manager = TTS_Manager()
         
-        # 2. Инициализация STT провайдеров (Гибридный подход)
         stt_config = self.config.get("stt", {})
         self.stt_command = create_stt_provider({
             "provider": stt_config.get("command_provider", "vosk"),
@@ -50,14 +66,11 @@ class Jarvis:
             "whisper": stt_config.get("whisper", {})
         })
         
-        # По умолчанию активен командный режим
         self.current_stt = self.stt_command
         
-        # 3. Остальные компоненты
         self.executor = ThreadPoolExecutor(max_workers=2, thread_name_prefix="JarvisWorker")
         self.audio: Optional[audio_in.AudioOpen] = None
         self.audio_out = audio_out.AudioOut()
-        self.context = ContextManager(max_turns=6) 
         self.commands_queue = asyncio.Queue(maxsize=10)
         
         # ServiceContainer будет создан в start(), но объявим тип для IDE
@@ -253,50 +266,120 @@ class Jarvis:
         logger.info("🔒 Режим команд активирован (Vosk)")
 
     async def _dialog_turn(self, messages_for_llm: list) -> str:
-        """Ограниченный цикл Tool Calling."""
+        """
+        Ограниченный цикл Tool Calling с защитой от сбоев.
+        
+        Features:
+        - Таймауты для предотвращения зависаний
+        - Обработка ошибок LLM
+        - Логирование производительности
+        """
         messages = list(messages_for_llm)
         tools_schema = self.reg.get_tools_schema() if self.reg else []
-
+        
+        start_time = time.time()
+        total_rounds = 0
+        
         for round_index in range(MAX_TOOL_ROUNDS):
-            response = await self.llm.async_generate_with_tools(messages, tools_schema)
-
+            total_rounds += 1
+            round_start = time.time()
+            
+            try:
+                # Таймаут для защиты от зависаний LLM
+                async with asyncio.timeout(LLM_TIMEOUT_SECONDS):
+                    response = await self.llm.async_generate_with_tools(messages, tools_schema)
+                
+                round_time = (time.time() - round_start) * 1000
+                logger.debug(f"⏱️ Round {round_index + 1} completed in {round_time:.0f}ms")
+                
+            except asyncio.TimeoutError:
+                logger.error(f"⏱️ LLM timeout после {LLM_TIMEOUT_SECONDS}с в раунде {round_index + 1}")
+                return "Прошу прощения, сэр, я задумался. Повторите, пожалуйста."
+            
+            except Exception as e:
+                logger.error(f"❌ Ошибка LLM в раунде {round_index + 1}: {e}", exc_info=True)
+                return "Произошла ошибка, сэр. Попробуйте ещё раз."
+            
             # --- обычный текстовый ответ: завершаем ---
             if not response.wants_tool:
                 thought, speech = self._parse_llm_text(response.text)
                 if thought:
                     logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
+                
+                total_time = (time.time() - start_time) * 1000
+                logger.info(f"✅ Диалог завершён за {total_time:.0f}ms, {total_rounds} раундов")
                 return speech
-
+            
             # --- модель запросила инструменты ---
             messages.append(response.as_assistant_message())
             
+            tool_round_start = time.time()
+            tools_executed = 0
+            
             for call in response.tool_calls[:MAX_TOOLS_PER_ROUND]:
                 logger.info(f"🛠️ LLM вызывает: {call.name} args={call.arguments}")
-                result = await self.reg.execute_tool(call.name, call.arguments)
                 
-                messages.append({
-                    "role": "tool",
-                    "tool_call_id": call.id,
-                    "name": call.name,
-                    "content": json.dumps(result, ensure_ascii=False, default=str)[:4000],
-                })
-
-                # Кэшируем результат инструмента
                 try:
-                    self.context.add_tool_result(
-                        call.name,
-                        json.dumps(call.arguments, ensure_ascii=False, default=str),
-                        json.dumps(result, ensure_ascii=False, default=str),
-                    )
+                    result = await self.reg.execute_tool(call.name, call.arguments)
+                    tools_executed += 1
+                    
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": call.id,
+                        "name": call.name,
+                        "content": json.dumps(result, ensure_ascii=False, default=str)[:4000],
+                    })
+                    
+                    # Кэшируем результат инструмента
+                    try:
+                        self.context.add_tool_result(
+                            call.name,
+                            json.dumps(call.arguments, ensure_ascii=False, default=str),
+                            json.dumps(result, ensure_ascii=False, default=str),
+                        )
+                    except Exception as e:
+                        logger.warning(f"⚠️ Не удалось закэшировать результат инструмента: {e}")
+                
                 except Exception as e:
-                    logger.warning(f"Не удалось закэшировать результат инструмента: {e}")
-
+                    logger.error(f"❌ Ошибка выполнения инструмента {call.name}: {e}", exc_info=True)
+                    
+                    # Передаём ошибку обратно в LLM как результат инструмента
+                    error_result = {
+                        "error": str(e),
+                        "tool_name": call.name
+                    }
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": call.id,
+                        "name": call.name,
+                        "content": json.dumps(error_result, ensure_ascii=False, default=str),
+                    })
+            
+            tool_round_time = (time.time() - tool_round_start) * 1000
+            logger.debug(f"🔧 Executed {tools_executed} tools in {tool_round_time:.0f}ms")
+        
         # Если лимит исчерпан, просим обычный текст
-        final_text = await self.llm.async_generate(messages)
-        thought, speech = self._parse_llm_text(final_text)
-        if thought:
-            logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
-        return speech or "Мне не удалось завершить запрос, сэр."
+        logger.warning(f"⚠️ Достигнут лимит раундов ({MAX_TOOL_ROUNDS}), запрашиваю финальный ответ")
+        
+        try:
+            async with asyncio.timeout(LLM_TIMEOUT_SECONDS):
+                final_text = await self.llm.async_generate(messages)
+            
+            thought, speech = self._parse_llm_text(final_text)
+            if thought:
+                logger.info(f"🧠 МЫСЛИ ДЖАРВИСА: {thought}")
+            
+            total_time = (time.time() - start_time) * 1000
+            logger.info(f"✅ Диалог завершён (fallback) за {total_time:.0f}ms, {total_rounds} раундов")
+            return speech or "Мне не удалось завершить запрос, сэр."
+        
+        except asyncio.TimeoutError:
+            logger.error(f"⏱️ LLM timeout при финальном ответе")
+            return "Я слишком долго думаю, сэр. Попробуйте упростить запрос."
+        
+        except Exception as e:
+            logger.error(f"❌ Ошибка при финальном ответе: {e}", exc_info=True)
+            return "Произошла ошибка, сэр. Не удалось завершить запрос."
 
     @staticmethod
     def _parse_llm_text(raw_response: str) -> tuple:
